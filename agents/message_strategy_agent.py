@@ -41,7 +41,8 @@ def call_claude_cli(prompt: str) -> str:
     """
     Call Claude via CLI using subprocess.
 
-    Requires: claude CLI installed and configured
+    Requires: claude CLI installed and configured.
+    Note: Model switching requires API layer (CLI doesn't support -m flag).
 
     Args:
         prompt: The prompt to send to Claude
@@ -55,7 +56,7 @@ def call_claude_cli(prompt: str) -> str:
             [claude_path, "-p", prompt],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
         )
 
         if result.returncode != 0:
@@ -68,7 +69,88 @@ def call_claude_cli(prompt: str) -> str:
             "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude"
         )
     except subprocess.TimeoutExpired:
-        raise RuntimeError("Claude CLI call timed out after 60 seconds")
+        raise RuntimeError("Claude CLI call timed out after 120 seconds")
+
+
+def analyze_market_context(
+    campaign_type: str,
+    offer: str,
+    target_industry: str,
+    target_personas: List[str],
+) -> Dict[str, Any]:
+    """
+    Deep market analysis to identify real pain points + market dynamics.
+
+    Analyzes:
+    - Current market challenges in target_industry
+    - Pain points specific to each persona
+    - Market trends driving urgency
+    - Competitive landscape context
+
+    Args:
+        campaign_type: Type of campaign (Market Research, Survey, etc.)
+        offer: What's being offered
+        target_industry: Target industry
+        target_personas: Target personas
+
+    Returns:
+        Dict with market_insights, pain_points_per_persona, market_trends
+    """
+    prompt = f"""TASK: Deep market analysis for {target_industry}.
+DO NOT ASK QUESTIONS. DO NOT EXPLAIN. RETURN ONLY JSON.
+
+Campaign Type: {campaign_type}
+Offer: {offer}
+Industry: {target_industry}
+Target Personas: {', '.join(target_personas)}
+
+Analyze CURRENT market state in {target_industry}:
+1. What are the TOP 3-4 real, specific pain points each persona faces RIGHT NOW (not generic)?
+2. What market trends or changes are driving urgency?
+3. What are competitor/peer approaches to solving these problems?
+4. What specific metrics or KPIs matter to each persona in this context?
+
+Return ONLY valid JSON. No text. No explanations.
+
+RESPONSE FORMAT (JSON only):
+{{
+    "market_overview": "Brief current state of {target_industry}",
+    "primary_market_challenge": "Main challenge driving the campaign",
+    "market_trends": ["Trend 1", "Trend 2", "Trend 3"],
+    "persona_pain_points": {{
+        "CXO": ["Specific pain 1", "Specific pain 2", "Specific pain 3"],
+        "Director": ["Specific pain 1", "Specific pain 2", "Specific pain 3"]
+    }},
+    "competitive_context": "How competitors/peers are responding",
+    "urgency_factors": ["Factor 1", "Factor 2"],
+    "key_metrics": {{
+        "CXO": ["Metric 1", "Metric 2"],
+        "Director": ["Metric 1", "Metric 2"]
+    }}
+}}"""
+
+    try:
+        analysis_response = call_claude_cli(prompt)
+        cleaned = analysis_response.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith("```"):
+            cleaned = cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+        return json.loads(cleaned)
+    except Exception as e:
+        return {
+            "market_overview": f"Market analysis for {target_industry}",
+            "primary_market_challenge": "Market competition and efficiency",
+            "market_trends": [],
+            "persona_pain_points": {p: ["Market pressure", "Efficiency gap"] for p in target_personas},
+            "competitive_context": "Competitors actively engaging",
+            "urgency_factors": ["Competitive pressure", "Operational efficiency"],
+            "key_metrics": {p: ["Growth", "ROI"] for p in target_personas},
+            "error": str(e),
+        }
 
 
 def parse_claude_strategy(claude_response: str) -> Dict[str, Any]:
@@ -127,7 +209,12 @@ def generate_strategy(
     channel_mix: List[str],
 ) -> Dict[str, Any]:
     """
-    Generate messaging strategy for campaign using Claude CLI.
+    Generate messaging strategy with integrated deep market analysis.
+
+    Uses single Claude call that includes:
+    - Deep market context analysis
+    - Persona-specific pain points identification
+    - Messaging angles + value props tailored to market
 
     Args:
         campaign_name: Name of campaign
@@ -140,7 +227,7 @@ def generate_strategy(
     Returns:
         Dict with messaging strategy, persona strategies, channel guidance
     """
-    prompt = f"""TASK: Generate campaign messaging strategy.
+    prompt = f"""TASK: Deep market analysis + messaging strategy generation.
 DO NOT ASK QUESTIONS. DO NOT EXPLAIN. RETURN ONLY JSON.
 
 Campaign: {campaign_name}
@@ -150,34 +237,51 @@ Offer: {offer}
 Personas: {', '.join(target_personas)}
 Channels: {', '.join(channel_mix)}
 
-For EACH persona, identify real pain points in {target_industry} + messaging angle + value prop.
-Generate tone, themes, CTA appropriate for {campaign_type} campaign type.
-Provide channel guidance for each channel in {channel_mix}.
+FIRST: Analyze current {target_industry} market state:
+- What are the TOP REAL pain points {', '.join(target_personas)} face RIGHT NOW?
+- What market trends drive urgency?
+- How are competitors responding?
 
-OUTPUT: Valid JSON only. No text. No questions. No explanations.
+THEN: Generate messaging strategy that:
+1. For EACH persona, identify 3 SPECIFIC, REAL pain points (not generic)
+2. Create primary angles that hit these pain points directly
+3. Build value props that solve these challenges
+4. Set tone + themes appropriate for {campaign_type}
+5. Provide channel guidance for {', '.join(channel_mix)}
 
-RESPONSE FORMAT (JSON only, no text):
+CRITICAL: Pain points must be SPECIFIC to {target_industry} + {campaign_type}, not generic.
+Example GOOD: "Teacher retention at 20-year high creating curriculum gaps" (specific)
+Example BAD: "Market challenges" (generic)
+
+OUTPUT: Valid JSON only. No text. No explanations.
+
+RESPONSE FORMAT:
 {{
-    "messaging_tone": "consultative",
+    "messaging_tone": "professional",
     "key_themes": ["theme1", "theme2", "theme3"],
     "call_to_action": "Specific CTA for this campaign type",
     "success_criteria": {{
         "email_open_rate": "25-30%",
-        "email_click_rate": "5-7%",
         "response_rate": "3-5%"
     }},
     "persona_strategies": {{
-        "CXO": {{
-            "primary_angle": "Strategic market positioning and competitive advantage",
-            "pain_points": ["Specific pain 1", "Specific pain 2", "Specific pain 3"],
-            "value_prop": "How this campaign solves their specific pain points"
+        "cxo_strategy": {{
+            "primary_angle": "Specific market insight addressing their pain",
+            "pain_points": ["Specific pain point 1", "Specific pain point 2", "Specific pain point 3"],
+            "value_prop": "How this solves their specific pain points"
+        }},
+        "operations": {{
+            "primary_angle": "Specific operational challenge",
+            "pain_points": ["Specific operational pain 1", "Specific operational pain 2", "Specific operational pain 3"],
+            "value_prop": "How this solves operational challenges"
         }}
     }},
     "channel_guidance": {{
-        "email": "Professional, data-driven, lead with insight",
-        "whatsapp": "Conversational, warm, peer-to-peer"
+        "email": "Specific guidance for {campaign_type}",
+        "linkedin": "Specific guidance for {campaign_type}",
+        "whatsapp": "Specific guidance for {campaign_type}"
     }},
-    "market_context_rationale": "Brief explanation of market dynamics driving the strategy"
+    "market_context_rationale": "Brief explanation of market dynamics"
 }}"""
 
     try:
@@ -188,15 +292,17 @@ RESPONSE FORMAT (JSON only, no text):
     except Exception as e:
         return {
             "messaging_tone": "professional",
-            "key_themes": ["market insight"],
+            "key_themes": ["industry trends", "market positioning"],
             "call_to_action": "Schedule a conversation",
             "success_criteria": {},
             "persona_strategies": {p: {
-                "primary_angle": "Industry insight and market positioning",
-                "pain_points": ["Market challenges"],
-                "value_prop": "Strategic insights for decision-making"
+                "primary_angle": f"{target_industry} strategy and market positioning",
+                "pain_points": [f"Operational efficiency in {target_industry}",
+                               f"Market competitiveness challenges",
+                               f"Strategic decision-making in current market"],
+                "value_prop": f"Strategic insights to drive {offer.lower()}"
             } for p in target_personas},
-            "channel_guidance": {},
+            "channel_guidance": {ch: f"Professional, market-focused guidance for {campaign_type}" for ch in channel_mix},
             "error": str(e),
         }
 
