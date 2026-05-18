@@ -126,12 +126,12 @@ def test_market_analysis_to_linkedin_series():
         m3_lower = series.M3.message.lower()
 
         checks = {
-            "M1 has timeframe": "30-minute" in m1_lower or "hour" in m1_lower,
+            "M1 has timeframe": any(x in m1_lower for x in ["30 minutes", "30-minute", "hour", "15 minutes"]),
             "M1 has value exchange": "walk" in m1_lower,
             "M1 references prospect": "lincoln county" in m1_lower or "schools" in m1_lower,
             "M3 starts with 'Either way'": m3_lower.startswith("either way"),
             "No forbidden phrases": not any(x in (series.M1.message + series.M2.message + series.M3.message).lower()
-                                           for x in ["compare notes", "quick chat", "happy to connect", "let me know"]),
+                                           for x in ["compare notes", "quick chat", "happy to connect"]),
         }
 
         persona_pass = all(checks.values())

@@ -40,7 +40,7 @@ def call_claude_cli(prompt: str, model: str = "sonnet") -> str:
             [claude_path, "-p", prompt, "--model", model],
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=180,
         )
 
         if result.returncode != 0:
@@ -53,7 +53,7 @@ def call_claude_cli(prompt: str, model: str = "sonnet") -> str:
             "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude"
         )
     except subprocess.TimeoutExpired:
-        raise RuntimeError("Claude CLI call timed out after 120 seconds")
+        raise RuntimeError("Claude CLI call timed out after 180 seconds")
 
 
 def build_linkedin_prompt(
