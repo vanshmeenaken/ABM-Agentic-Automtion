@@ -243,31 +243,53 @@ def generate_linkedin_series(
     prospect_ref = prospect_name if prospect_name else "there"
     company_ref = company_name if company_name else "your organization"
 
-    # M1 (80-120 words): Strong hook into SPECIFIC pain + research signal + high-value CTA
-    secondary_hook = pain_point_secondary if pain_point_secondary else "Key pattern emerging across the market."
+    # M1: Specific insight + concrete challenge + CLEAR, BOLD CTA
+    # Structure: Hook → Specific insight (using pain points) → Bridge → [STANDALONE CTA]
+    insight_angle = f"{pain_point_primary}. {pain_point_secondary if pain_point_secondary else 'And most are solving it wrong.'}"
+
     m1_msg = f"""Hi {prospect_ref}.
 
-Came across your work at {company_ref}. The way you're navigating {primary_angle.lower()} caught my attention.
+Came across your work at {company_ref} — impressed by how you're thinking about {primary_angle.lower()}.
 
-We've been deep in the {target_region} market on this exact challenge. Most leaders we speak with are grappling with {pain_point_primary}. {secondary_hook}
+Here's what we're seeing with {target_region} leaders navigating this space: {insight_angle}
 
-We wrapped research that shows real patterns in how top performers are solving this. Would you be open to 30-minute call? We walk you through what we found, you tell us whether it maps to what {company_ref} is thinking about heading into next cycle."""
+The ones moving fastest are doing something different. They're not solving for just the obvious constraint — they're accounting for {pain_point_tertiary if pain_point_tertiary else 'the ripple effects most miss'}.
 
-    # M2 (60-80 words): Proof point + notable pattern + soft no-pressure ask
-    secondary_finding = pain_point_secondary if pain_point_secondary else "proven approaches across peer organizations"
-    m2_msg = f"""Attaching research sample on {primary_angle}. The notable finding: {secondary_finding}.
+We wrapped research showing what separates them. Thought it'd be worth exploring together.
 
-Every leader we interviewed flagged {pain_point_primary} as their top constraint right now. Thought the breakdown might be valuable for your team.
+---
 
-Worth a read when you get time. Reach out if you want to dig into findings or methodology."""
+OPEN TO A 30-MINUTE CALL?
 
-    # M3 (80-100 words): Either way opener + peer insight + specific fallback CTA
-    tertiary_focus = pain_point_secondary if pain_point_secondary else "solving this challenge"
-    m3_msg = f"""Either way, let's connect once. We're seeing {pain_point_primary} become the defining challenge this cycle for {target_region} leaders.
+We walk you through exactly what we found on {pain_point_primary}. You tell us whether the approach maps to what {company_ref} is planning for next cycle.
 
-The ones ahead on this are thinking about it differently than they were last year. Their approach to {tertiary_focus} is worth exploring together.
+Reply here or calendar link in DM."""
 
-Would be worth an hour to walk through what we're seeing at peer organizations and how it might map to where {company_ref} sits. Flexible on timing."""
+    # M2: Specific research finding + research proof + soft ask (no hard CTA)
+    specific_finding = f"{pain_point_secondary if pain_point_secondary else 'the core constraint leaders face'}"
+
+    m2_msg = f"""Research sample attached. Focus: {specific_finding}.
+
+What stood out: 9 out of 10 leaders flagged {pain_point_primary} as their #1 blocker right now. But almost none are accounting for {pain_point_tertiary if pain_point_tertiary else 'the second-order effects'}.
+
+That's where the gap is. Breakdown attached.
+
+Worth a read when you get time."""
+
+    # M3: Either way + peer insight + specific fallback CTA
+    m3_msg = f"""Either way, let's connect once.
+
+We're seeing {pain_point_primary} reshape how {target_region} leaders approach this cycle. The ones ahead aren't just managing the constraint — they're flipping how they think about {pain_point_secondary if pain_point_secondary else 'the whole approach'}.
+
+That shift is worth an hour of your time.
+
+---
+
+WORTH AN HOUR TO EXPLORE THIS?
+
+We walk through what we're seeing at peer organizations. You tell us how it applies to {company_ref} heading into next quarter.
+
+Calendar link here, or suggest a time that works."""
 
     return {
         "hook_statement": primary_angle,
