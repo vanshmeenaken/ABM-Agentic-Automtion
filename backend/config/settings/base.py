@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # Ken ABM Platform Apps
     "apps.core.apps.CoreConfig",
     "apps.audit.apps.AuditConfig",
+    "apps.agents_api.apps.AgentsApiConfig",
     "apps.campaigns.apps.CampaignsConfig",
     "apps.prospects.apps.ProspectsConfig",
     "apps.messages.apps.MessagesConfig",

@@ -1,0 +1,319 @@
+{
+  "info": {
+    "name": "ABM Agents API",
+    "description": "REST API for 5 ABM Agents — Persona Classifier, Message Strategy, Email Copy, WhatsApp Copy, LinkedIn Copy",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Get JWT Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/auth/token/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "auth", "token", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Persona Classifier",
+      "item": [
+        {
+          "name": "Classify Prospect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"designation\": \"VP of Sales\",\n  \"company_type\": \"SaaS\",\n  \"industry\": \"EdTech\",\n  \"seniority_signals\": [\"manages 10+ people\", \"5+ years experience\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/persona-classifier/classify/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "persona-classifier", "classify", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Persona Classifier Docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/persona-classifier/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "persona-classifier", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Message Strategy",
+      "item": [
+        {
+          "name": "Generate Strategy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign_name\": \"K-12 EdTech Sales 2026\",\n  \"campaign_type\": \"Market Research\",\n  \"offer\": \"Research on EdTech adoption trends in Indian K-12 schools\",\n  \"target_industry\": \"K-12 Education\",\n  \"target_personas\": [\"cxo_strategy\", \"operations\"],\n  \"channel_mix\": [\"email\", \"whatsapp\", \"linkedin\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/message-strategy/generate/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "message-strategy", "generate", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Message Strategy Docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/message-strategy/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "message-strategy", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Email Copy",
+      "item": [
+        {
+          "name": "Generate Email (M1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy_brief\": {\n    \"primary_angle\": \"Competitive positioning in EdTech shift\",\n    \"pain_points\": [\"Competitors adopting faster\", \"Enrollment pressure\"],\n    \"value_prop\": \"Market insights to accelerate positioning\"\n  },\n  \"persona_tag\": \"cxo_strategy\",\n  \"prospect_name\": \"John Doe\",\n  \"company_name\": \"Greenfield School District\",\n  \"offer\": \"EdTech adoption research\",\n  \"stage\": \"M1\",\n  \"sender_name\": \"Sarah Chen\",\n  \"prior_email_subjects\": []\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/email-copy/generate/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "email-copy", "generate", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Email (M2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy_brief\": {\n    \"primary_angle\": \"Competitive positioning in EdTech shift\",\n    \"pain_points\": [\"Competitors adopting faster\", \"Enrollment pressure\"],\n    \"value_prop\": \"Market insights to accelerate positioning\"\n  },\n  \"persona_tag\": \"cxo_strategy\",\n  \"prospect_name\": \"John Doe\",\n  \"company_name\": \"Greenfield School District\",\n  \"offer\": \"EdTech adoption research\",\n  \"stage\": \"M2\",\n  \"sender_name\": \"Sarah Chen\",\n  \"prior_email_subjects\": [\"3 trends reshaping K-12 strategy in 2026\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/email-copy/generate/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "email-copy", "generate", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Email Copy Docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/email-copy/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "email-copy", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp Copy",
+      "item": [
+        {
+          "name": "Generate WhatsApp (M1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy_brief\": {\n    \"primary_angle\": \"Competitive positioning in EdTech\",\n    \"pain_points\": [\"Falling behind competitors\", \"Enrollment pressure\"],\n    \"value_prop\": \"Market data to accelerate positioning\"\n  },\n  \"persona_tag\": \"cxo_strategy\",\n  \"prospect_name\": \"Jane Smith\",\n  \"company_name\": \"Lakewood Academy\",\n  \"offer\": \"EdTech adoption research\",\n  \"stage\": \"M1\",\n  \"sender_name\": \"Sarah Chen\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/whatsapp-copy/generate/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "whatsapp-copy", "generate", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get WhatsApp Copy Docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/whatsapp-copy/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "whatsapp-copy", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "LinkedIn Copy",
+      "item": [
+        {
+          "name": "Generate LinkedIn (Connection + DM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"strategy_brief\": {\n    \"primary_angle\": \"Peer-level thought leadership\",\n    \"pain_points\": [\"Competitive gap\", \"EdTech readiness\"],\n    \"value_prop\": \"Strategic insights for positioning\"\n  },\n  \"persona_tag\": \"cxo_strategy\",\n  \"prospect_name\": \"Alice Rodriguez\",\n  \"company_name\": \"NextGen Schools\",\n  \"offer\": \"EdTech competitive insights\",\n  \"sender_name\": \"Sarah Chen\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/linkedin-copy/generate/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "linkedin-copy", "generate", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get LinkedIn Copy Docs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/agents/linkedin-copy/",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "agents", "linkedin-copy", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "JWT_TOKEN",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ]
+}
