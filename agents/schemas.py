@@ -361,6 +361,54 @@ class WhatsAppCopyOutput(BaseModel):
     notes: str = ""
 
 
+# LinkedIn Copy schemas
+class LinkedInDM(BaseModel):
+    """Single LinkedIn DM in the series."""
+
+    message: str = Field(..., description="DM body text")
+    word_count: int = Field(..., description="Word count of message")
+    send_day: str = Field(..., description="When to send (Day 1, Day 3-4, Day 7-10)")
+
+
+class LinkedInDMSeries(BaseModel):
+    """Complete LinkedIn M1-M3 DM series."""
+
+    M1: LinkedInDM = Field(..., description="First message (post-connection hook)")
+    M2: LinkedInDM = Field(..., description="Second message (proof/sample)")
+    M3: LinkedInDM = Field(..., description="Third message (low-pressure close)")
+    hook_statement: str = Field(..., description="The core insight/hook used")
+    cta_type: str = Field(..., description="CTA type: 30_min_call, walk_through, sample_review, either_way")
+
+
+class LinkedInCopyInput(BaseModel):
+    """Input schema for LinkedIn Copy Agent."""
+
+    campaign_name: str = Field(..., description="Campaign name")
+    campaign_type: str = Field(..., description="Campaign type")
+    persona: str = Field(..., description="Target persona")
+    primary_angle: str = Field(..., description="Core messaging angle")
+    pain_points: List[str] = Field(..., description="Market-specific pain points")
+    value_prop: str = Field(..., description="Value proposition")
+    tone: str = Field(..., description="Tone guidance from Message Strategy")
+    channel_guidance: str = Field(..., description="LinkedIn-specific tone guidance")
+    target_region: str = Field(default="Global", description="Target region")
+    prospect_name: Optional[str] = Field(None, description="Prospect name (for personalization)")
+    company_name: Optional[str] = Field(None, description="Company name (for personalization)")
+    sender_name: Optional[str] = Field(None, description="Sender name (for sign-off)")
+
+
+class LinkedInCopyOutput(BaseModel):
+    """Output from LinkedIn Copy Agent."""
+
+    campaign_name: str = Field(..., description="Campaign name")
+    campaign_type: str = Field(..., description="Campaign type")
+    linkedin_series: Dict[str, LinkedInDMSeries] = Field(
+        ..., description="Per-persona LinkedIn DM series"
+    )
+    channel_guidance: str = Field(..., description="LinkedIn channel guidance")
+    notes: str = Field(default="", description="Implementation notes")
+
+
 # Orchestrator schemas
 class OrchestrationInput(BaseModel):
     """Input to run full orchestration."""

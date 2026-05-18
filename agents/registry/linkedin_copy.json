@@ -1,0 +1,221 @@
+{
+  "agent_id": "linkedin_copy",
+  "agent_name": "LinkedIn Copy Agent",
+  "description": "Generates market-aware LinkedIn DM series (M1-M3): hook, proof, low-pressure close. No connection note. Real insights, specific CTAs with timeframe + value exchange + context-awareness.",
+  "model": "claude-sonnet-4-6",
+  "version": "1.0.0",
+  "status": "production",
+  "system_prompt": "You are an expert B2B LinkedIn copywriter specializing in ABM campaigns. Your role is to generate compelling, market-specific LinkedIn DM series that drive engagement without generic language.\n\nWhen generating LinkedIn DM series:\n1. **M1 (Day 1 — Hook):** \n   - Hook into SPECIFIC industry pain (not generic angles)\n   - Signal research/data/evidence\n   - CTA: Specific timeframe (30-minute call, hour, 15 minutes) + value exchange + context-aware reference\n   - Example: 'Would you be open to a 30-minute call? We walk through [X], you tell us whether it maps to [their Y].'\n   - Length: 80-120 words\n\n2. **M2 (Day 3-4 — Proof):**\n   - Drop proof: sample, insight, data, or research finding\n   - Brief reference to M1\n   - Low-pressure ask: 'Let me know once you've reviewed'\n   - No CTA push\n   - Length: 60-80 words\n\n3. **M3 (Day 7-10 — Close):**\n   - Open with 'Either way, let's connect once'\n   - Peer observation about their situation/timing (not pressure)\n   - Specific fallback CTA with timeframe\n   - Alternative framing if they didn't engage with M1/M2\n   - Length: 80-100 words\n\n**TONE:** Casual LinkedIn DM. Peer-to-peer. Short punchy lines. NO dashes. Natural cadence. One CTA per message. Show research of their industry and company.\n\n**CTA RULES (STRICT):**\n- ALWAYS name meeting length: '30-minute call', 'hour', '15 minutes' — never 'call' or 'chat'\n- ALWAYS include value exchange: 'we walk through X, you tell us Y'\n- ALWAYS reference THEIR context: their planning cycle, season, challenge, metric\n- M3 MUST use 'Either way' opener\n- NEVER say: 'compare notes', 'quick chat', 'happy to connect', 'let me know', 'worth a call'\n\n**OUTPUT:** JSON with M1, M2, M3 messages, word counts, send days, hook statement, and CTA type.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "campaign_name": {
+        "type": "string",
+        "description": "Name of the campaign"
+      },
+      "campaign_type": {
+        "type": "string",
+        "enum": ["Market Research", "Survey", "Consulting", "Expert Network", "Webinar", "Report Sales", "Competition Benchmarking", "Account Reactivation"],
+        "description": "Type of campaign"
+      },
+      "persona_strategies": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "primary_angle": {
+              "type": "string",
+              "description": "Primary messaging angle for this persona"
+            },
+            "pain_points": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "2-3 market-specific pain points"
+            },
+            "value_prop": {
+              "type": "string",
+              "description": "How offer solves the pain"
+            }
+          },
+          "required": ["primary_angle", "pain_points", "value_prop"]
+        },
+        "description": "Per-persona strategies from Message Strategy Agent"
+      },
+      "messaging_strategy": {
+        "type": "object",
+        "properties": {
+          "tone": {
+            "type": "string",
+            "description": "Tone: formal, conversational, data-led"
+          },
+          "key_themes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Main messaging themes"
+          },
+          "value_propositions": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Value prop per persona"
+          }
+        },
+        "required": ["tone"],
+        "description": "Overall messaging strategy"
+      },
+      "channel_guidance": {
+        "type": "object",
+        "additionalProperties": {"type": "string"},
+        "description": "Channel-specific guidance including LinkedIn"
+      },
+      "target_personas": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "List of target personas (cxo_strategy, marketing, operations, etc.)"
+      },
+      "target_region": {
+        "type": "string",
+        "default": "Global",
+        "description": "Target geographic region"
+      },
+      "prospect_name": {
+        "type": "string",
+        "description": "Prospect name (optional, for personalization)"
+      },
+      "company_name": {
+        "type": "string",
+        "description": "Prospect company name (optional, for personalization)"
+      },
+      "sender_name": {
+        "type": "string",
+        "description": "Sender name (optional, for sign-off)"
+      }
+    },
+    "required": ["campaign_name", "campaign_type", "persona_strategies", "messaging_strategy", "channel_guidance", "target_personas"]
+  },
+  "tools": [
+    {
+      "name": "generate_linkedin_series",
+      "description": "Generate M1-M3 LinkedIn DM series with market-specific insights and context-aware CTAs",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_name": {"type": "string"},
+          "campaign_type": {"type": "string"},
+          "linkedin_series": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "M1": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "maxLength": 600},
+                    "word_count": {"type": "integer"},
+                    "send_day": {"type": "string", "pattern": "^Day [0-9](-[0-9])?$"}
+                  },
+                  "required": ["message", "word_count", "send_day"]
+                },
+                "M2": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "maxLength": 500},
+                    "word_count": {"type": "integer"},
+                    "send_day": {"type": "string"}
+                  },
+                  "required": ["message", "word_count", "send_day"]
+                },
+                "M3": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "maxLength": 550},
+                    "word_count": {"type": "integer"},
+                    "send_day": {"type": "string"}
+                  },
+                  "required": ["message", "word_count", "send_day"]
+                },
+                "hook_statement": {
+                  "type": "string",
+                  "description": "One-line market insight/hook used"
+                },
+                "cta_type": {
+                  "type": "string",
+                  "enum": ["30_min_call", "walk_through", "sample_review", "either_way"],
+                  "description": "CTA type used across series"
+                }
+              },
+              "required": ["M1", "M2", "M3", "hook_statement", "cta_type"]
+            },
+            "description": "Per-persona DM series"
+          },
+          "channel_guidance": {"type": "string"},
+          "notes": {"type": "string"}
+        },
+        "required": ["campaign_name", "campaign_type", "linkedin_series"]
+      }
+    }
+  ],
+  "example_input": {
+    "campaign_name": "K-12 EdTech Expansion",
+    "campaign_type": "Market Research",
+    "persona_strategies": {
+      "cxo_strategy": {
+        "primary_angle": "How K-12 districts are rethinking teacher retention strategies in face of burnout trends",
+        "pain_points": [
+          "Rising teacher turnover creating curriculum continuity gaps",
+          "Budget constraints limiting professional development spend",
+          "Difficulty proving ROI of retention initiatives to boards"
+        ],
+        "value_prop": "Research-backed insights on peer districts' retention strategies and cost-effective implementation approaches"
+      }
+    },
+    "messaging_strategy": {
+      "tone": "consultative",
+      "key_themes": ["teacher retention", "operational efficiency", "budget optimization"],
+      "value_propositions": {
+        "cxo_strategy": "Strategic insights on how peer districts solve teacher retention within budget constraints"
+      }
+    },
+    "channel_guidance": {
+      "linkedin": "Thought leadership, peer-to-peer, data-backed insights"
+    },
+    "target_personas": ["cxo_strategy"],
+    "target_region": "North America",
+    "prospect_name": "Jennifer",
+    "company_name": "Lincoln County Schools"
+  },
+  "example_output": {
+    "campaign_name": "K-12 EdTech Expansion",
+    "campaign_type": "Market Research",
+    "linkedin_series": {
+      "cxo_strategy": {
+        "M1": {
+          "message": "Hi Jennifer,\n\nWe just finished research with 40+ districts on teacher retention strategies. Lincoln County's turnover numbers put you in the top quartile for challenge here.\n\nWhat's interesting: districts solving this aren't doing massive budget increases. They're focused on specific operational changes.\n\nWould you be open to a 30-minute call? We walk through the research and you tell us whether it maps to what you're working on for board next quarter.",
+          "word_count": 78,
+          "send_day": "Day 1"
+        },
+        "M2": {
+          "message": "Attaching sample from our research — focus on how 3 districts tackled this within existing budgets. The pattern was pretty consistent.\n\nLet me know once you've had a chance to look through it. Happy to answer questions on the methodology.",
+          "word_count": 43,
+          "send_day": "Day 3-4"
+        },
+        "M3": {
+          "message": "Either way, let's connect once — we're seeing this challenge come up consistently this cycle as budgets get locked for next year.\n\nWould value an hour to walk through what we're seeing and get your take on how your district is thinking about this heading into your planning cycle.",
+          "word_count": 55,
+          "send_day": "Day 7-10"
+        },
+        "hook_statement": "Research on how peer districts solve teacher retention within budget constraints",
+        "cta_type": "30_min_call"
+      }
+    },
+    "channel_guidance": "Thought leadership, peer-to-peer, data-backed insights",
+    "notes": "M1 hooks into specific regional pain (turnover data). M2 drops proof (sample research). M3 uses 'Either way' low-pressure opener with context reference (planning cycle). All CTAs name timeframe + value exchange."
+  },
+  "integration_notes": {
+    "inputs_from": "Orchestrator (campaign context) + Message Strategy Agent (persona strategies, tone, themes, channel guidance)",
+    "outputs_to": "LinkedIn outreach platform, sales enablement, campaign execution",
+    "data_contract": "Input: campaign_name, campaign_type, persona_strategies (with pain_points, primary_angle, value_prop), messaging_strategy (tone), channel_guidance, target_personas. Output: per-persona M1-M3 series with messages, word counts, send days, hook, cta_type.",
+    "error_handling": "Fallback series generated if Claude CLI fails. Uses primary_angle as hook_statement and pain_points for basic M1/M2/M3 templates.",
+    "cta_rules": "All CTAs must: (1) name timeframe (30-minute, hour, etc.), (2) include value exchange (we do X, you tell us Y), (3) reference prospect context (season, cycle, metric). M3 must open with 'Either way'. Never use generic language (compare notes, quick chat, let me know).",
+    "voice_guidelines": "Casual LinkedIn DM style — short lines, no dashes, peer-to-peer, natural cadence. Show research of industry and prospect. One CTA per message."
+  }
+}
