@@ -1,0 +1,381 @@
+{
+  "agent_id": "campaign_planner",
+  "name": "Campaign Planner Agent",
+  "version": "1.0",
+  "description": "Converts raw campaign ideas into fully structured campaign plans with ICP definition, persona mapping, and channel strategy.",
+  "workflow": "Campaign Creation Workflow",
+  "skills_used": ["Campaign Planning Skill", "ICP Definition Skill"],
+  "model": "claude-sonnet-4-6",
+  "system_prompt": "You are the Campaign Planner Agent for Ken Research's ABM Revenue Automation Platform.\n\nYour job: Convert raw campaign ideas into fully structured campaign plans.\n\nINPUTS:\n- campaign_name: Name of campaign\n- target_industry: Primary industry target\n- target_region: Geographic region\n- offer: What you're offering\n- campaign_type: Type of campaign (Market Research, Survey, Consulting, Expert Network, Webinar, Report Sales, Competition Benchmarking, Account Reactivation)\n- preferred_channels: Optional channel preferences (email, whatsapp, linkedin)\n- notes: Optional additional context\n\nYOUR REASONING STEPS:\n1. Validate campaign_type against known types. If unknown, default to \"Market Research\" and flag in confidence_notes.\n2. Apply ICP Definition logic:\n   - Generate positive ICP criteria (industries, sub_segments, company_size, regions, seniority_levels, decision_maker_functions, buying_signals)\n   - Generate negative ICP criteria (excluded_company_types, excluded_industries, excluded_regions, excluded_company_sizes)\n   - Always exclude: competitors of Ken Research, companies in active sales pipeline, DNC-marked companies, freelancers/sole traders\n3. Map buyer personas:\n   - Use target_industry to identify primary + secondary personas\n   - Map seniority_levels by campaign_type (Market Research → C-suite/VP/Director, Survey → Manager+/Director+, etc.)\n   - Always include at least one primary persona. Generic CXO if no match.\n4. Select channels:\n   - If preferred_channels provided, use those (must be valid: email, whatsapp, linkedin)\n   - Else use default channels for campaign_type (Market Research → email + whatsapp, Survey → whatsapp + email, etc.)\n   - At least one channel required.\n5. Set sequence timing:\n   - M1: Day 0 (immediate)\n   - M2: Day 3\n   - M3: Day 7\n   - M4: Day 12\n6. Determine approval_flag:\n   - Always TRUE for first-run campaigns (new campaigns always require approval)\n7. Flag ambiguity:\n   - If industry is too vague (e.g., \"Technology\" without sub-segment) → flag in confidence_notes\n   - If offer is unclear → flag\n   - If no matching personas found → flag\n\nPLATFORM INVARIANTS:\n- Output is a DRAFT only. Cannot activate campaigns.\n- Cannot write to Pipedrive directly.\n- All runs logged to AuditLog with input + output payload.\n- Must output at least one primary persona and one channel.\n- Never discard data; flag issues instead.\n\nFAILURE MODES:\n- Missing required fields → Validation error (should not reach this point in the agent)\n- Unrecognized campaign_type → Default to Market Research, flag\n- No matching persona → Output generic CXO, flag low_confidence\n- Ambiguous ICP → Flag in confidence_notes\n\nOUTPUT: Use the create_campaign_draft tool to return structured output.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "campaign_name": {
+        "type": "string",
+        "description": "Name of the campaign"
+      },
+      "target_industry": {
+        "type": "string",
+        "description": "Primary industry target (e.g., Automotive)"
+      },
+      "target_region": {
+        "type": "string",
+        "description": "Geographic region (e.g., India, EMEA)"
+      },
+      "offer": {
+        "type": "string",
+        "description": "Campaign offer or product description"
+      },
+      "campaign_type": {
+        "type": "string",
+        "enum": [
+          "Market Research",
+          "Survey",
+          "Consulting",
+          "Expert Network",
+          "Webinar",
+          "Report Sales",
+          "Competition Benchmarking",
+          "Account Reactivation"
+        ],
+        "description": "Type of campaign"
+      },
+      "preferred_channels": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["email", "whatsapp", "linkedin"]
+        },
+        "description": "Preferred outreach channels (optional)"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Additional campaign context or notes"
+      }
+    },
+    "required": [
+      "campaign_name",
+      "target_industry",
+      "target_region",
+      "offer",
+      "campaign_type"
+    ]
+  },
+  "tools": [
+    {
+      "name": "create_campaign_draft",
+      "description": "Create a structured campaign draft with ICP, personas, and channels",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_draft": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "campaign_type": {
+                "type": "string"
+              },
+              "target_industry": {
+                "type": "string"
+              },
+              "target_region": {
+                "type": "string"
+              },
+              "offer": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["draft"]
+              },
+              "requires_approval": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "campaign_type",
+              "target_industry",
+              "target_region",
+              "offer",
+              "status",
+              "requires_approval"
+            ]
+          },
+          "icp_definition": {
+            "type": "object",
+            "properties": {
+              "positive": {
+                "type": "object",
+                "properties": {
+                  "industries": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sub_segments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "company_size": {
+                    "type": "object"
+                  },
+                  "regions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "seniority_levels": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "decision_maker_functions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "buying_signals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "negative": {
+                "type": "object",
+                "properties": {
+                  "excluded_company_types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "excluded_industries": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "excluded_regions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "excluded_company_sizes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "persona_map": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "persona": {
+                  "type": "string"
+                },
+                "persona_type": {
+                  "type": "string",
+                  "enum": ["primary", "secondary"]
+                },
+                "rationale": {
+                  "type": "string"
+                }
+              },
+              "required": ["persona", "persona_type", "rationale"]
+            }
+          },
+          "channel_plan": {
+            "type": "object",
+            "properties": {
+              "channels": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["email", "whatsapp", "linkedin"]
+                }
+              },
+              "sequence_timing": {
+                "type": "object",
+                "properties": {
+                  "M1": {
+                    "type": "integer"
+                  },
+                  "M2": {
+                    "type": "integer"
+                  },
+                  "M3": {
+                    "type": "integer"
+                  },
+                  "M4": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "approval_flag": {
+            "type": "boolean"
+          },
+          "confidence_notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_draft",
+          "icp_definition",
+          "persona_map",
+          "channel_plan",
+          "approval_flag",
+          "confidence_notes"
+        ]
+      }
+    }
+  ],
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "campaign_draft": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "campaign_type": {
+            "type": "string"
+          },
+          "target_industry": {
+            "type": "string"
+          },
+          "target_region": {
+            "type": "string"
+          },
+          "offer": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requires_approval": {
+            "type": "boolean"
+          }
+        }
+      },
+      "icp_definition": {
+        "type": "object",
+        "properties": {
+          "positive": {
+            "type": "object"
+          },
+          "negative": {
+            "type": "object"
+          }
+        }
+      },
+      "persona_map": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        }
+      },
+      "channel_plan": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sequence_timing": {
+            "type": "object"
+          }
+        }
+      },
+      "approval_flag": {
+        "type": "boolean"
+      },
+      "confidence_notes": {
+        "type": "string"
+      }
+    }
+  },
+  "example_input": {
+    "campaign_name": "India EV Ecosystem Survey",
+    "target_industry": "Automotive",
+    "target_region": "India",
+    "offer": "Survey participation + sector report",
+    "campaign_type": "Survey",
+    "preferred_channels": null,
+    "notes": "Focus on EV component suppliers and OEMs"
+  },
+  "example_output": {
+    "campaign_draft": {
+      "name": "India EV Ecosystem Survey",
+      "campaign_type": "Survey",
+      "target_industry": "Automotive",
+      "target_region": "India",
+      "offer": "Survey participation + sector report",
+      "status": "draft",
+      "requires_approval": true
+    },
+    "icp_definition": {
+      "positive": {
+        "industries": ["Automotive"],
+        "sub_segments": ["EV component suppliers", "Automotive OEMs", "Fleet operators"],
+        "company_size": {
+          "min_employees": 500
+        },
+        "regions": ["India"],
+        "seniority_levels": ["Director", "VP", "C-suite"],
+        "decision_maker_functions": ["Operations", "Supply Chain", "Strategy"],
+        "buying_signals": ["EV adoption plans", "Supply chain transformation", "Sustainability initiatives"]
+      },
+      "negative": {
+        "excluded_company_types": ["Freelancers", "Sole traders"],
+        "excluded_industries": [],
+        "excluded_regions": [],
+        "excluded_company_sizes": []
+      }
+    },
+    "persona_map": [
+      {
+        "persona": "CXO",
+        "persona_type": "primary",
+        "rationale": "Survey targets strategic leadership for sector insights"
+      },
+      {
+        "persona": "Operations",
+        "persona_type": "secondary",
+        "rationale": "Operations leaders drive supply chain transformation initiatives"
+      }
+    ],
+    "channel_plan": {
+      "channels": ["whatsapp", "email"],
+      "sequence_timing": {
+        "M1": 0,
+        "M2": 3,
+        "M3": 7,
+        "M4": 12
+      }
+    },
+    "approval_flag": true,
+    "confidence_notes": "ICP well-defined for automotive EV transition. Personas match survey research use case. Channels selected for survey engagement in India market."
+  }
+}

@@ -1,0 +1,142 @@
+﻿{
+  "agent_id": "message_strategy",
+  "agent_name": "Message Strategy Agent",
+  "description": "Develops comprehensive ABM messaging strategy: tone, themes, persona value props, CTAs, and success criteria",
+  "model": "claude-sonnet-4-6",
+  "version": "2.0.0",
+  "status": "production",
+  "system_prompt": "You are a B2B Message Strategy Expert specializing in Account-Based Marketing (ABM). Your role is to develop comprehensive messaging strategies that align with campaign objectives, target industry dynamics, and buyer personas.\n\nWhen developing a strategy:\n1. **Tone Selection**: Match the campaign type (Market Research, Consulting, Webinar, etc.) to appropriate tone (consultative, professional, educational, urgent, etc.)\n2. **Theme Generation**: Identify 3-5 key themes that resonate with the target industry and address their primary pain points\n3. **Persona Value Props**: For each persona, craft a unique value proposition that speaks to their specific role, goals, and pain points\n   - CXO: Focus on strategic impact, competitive advantage, ROI\n   - Director: Focus on team efficiency, accountability, measurable outcomes\n   - Manager: Focus on process improvement, quick wins, operational metrics\n   - Specialist: Focus on tool efficiency, task automation, day-to-day benefits\n4. **Call-to-Action**: Define a campaign-specific CTA that aligns with the offer and audience\n5. **Success Metrics**: Establish realistic conversion targets based on campaign type and industry benchmarks\n6. **Channel Guidance**: Provide tone and messaging guidance for each channel (email, WhatsApp, LinkedIn)\n\nConsider:\n- Industry-specific language and pain points\n- Persona decision-making criteria\n- Campaign timeline and urgency\n- Competitive landscape insights\n- Market maturity and buyer readiness\n\nOutput a strategy that guides copy generation across all channels while maintaining consistency and coherence.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "campaign_name": {
+        "type": "string",
+        "description": "Name of the campaign (e.g., 'Tech Market Research Initiative')"
+      },
+      "campaign_type": {
+        "type": "string",
+        "enum": ["Market Research", "Survey", "Consulting", "Expert Network", "Webinar", "Report Sales", "Competition Benchmarking", "Account Reactivation"],
+        "description": "Type of campaign driving messaging strategy"
+      },
+      "offer": {
+        "type": "string",
+        "description": "What's being offered (research report, consultation, webinar, etc.)"
+      },
+      "target_personas": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Target buyer personas (CXO, Director, Manager, Specialist, Individual Contributor)"
+      },
+      "target_industry": {
+        "type": "string",
+        "description": "Industry being targeted (Technology, Finance, Healthcare, etc.)"
+      },
+      "channel_mix": {
+        "type": "array",
+        "items": {"type": "string", "enum": ["email", "whatsapp", "linkedin"]},
+        "description": "Channels for this campaign"
+      }
+    },
+    "required": ["campaign_name", "campaign_type", "offer", "target_personas", "target_industry", "channel_mix"]
+  },
+  "tools": [
+    {
+      "name": "define_message_strategy",
+      "description": "Define comprehensive messaging strategy for the campaign including tone, themes, persona-specific value propositions, CTAs, and success criteria",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tone": {
+            "type": "string",
+            "enum": ["professional", "consultative", "urgent", "friendly", "educational", "exclusive"],
+            "description": "Overall messaging tone for the campaign"
+          },
+          "tone_rationale": {
+            "type": "string",
+            "description": "Why this tone was selected for the campaign type and industry"
+          },
+          "key_themes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 3,
+            "maxItems": 5,
+            "description": "Key themes that resonate with target industry and personas (3-5 themes)"
+          },
+          "value_propositions": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Value proposition for each target persona addressing their specific needs"
+          },
+          "call_to_action": {
+            "type": "string",
+            "description": "Primary call-to-action for this campaign"
+          },
+          "cta_rationale": {
+            "type": "string",
+            "description": "Why this CTA aligns with campaign objectives and audience"
+          },
+          "success_criteria": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Success metrics by channel (email_open_rate, response_rate, meeting_rate, etc.)"
+          },
+          "channel_specific_guidance": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Tone and messaging guidance for each channel (email, whatsapp, linkedin)"
+          },
+          "persona_messaging_framework": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "primary_angle": {"type": "string"},
+                "pain_points_to_address": {"type": "string"},
+                "messaging_priority": {"type": "string"}
+              }
+            },
+            "description": "Messaging framework for each persona"
+          }
+        },
+        "required": ["tone", "key_themes", "value_propositions", "call_to_action", "success_criteria"]
+      }
+    }
+  ],
+  "example_input": {
+    "campaign_name": "Tech Market Research Initiative",
+    "campaign_type": "Market Research",
+    "offer": "Comprehensive market research report on AI/ML adoption in enterprise",
+    "target_personas": ["CXO", "Director"],
+    "target_industry": "Technology",
+    "channel_mix": ["email", "whatsapp", "linkedin"]
+  },
+  "example_output": {
+    "messaging_strategy": {
+      "campaign_name": "Tech Market Research Initiative",
+      "tone": "consultative",
+      "key_themes": ["AI/ML adoption", "digital transformation", "competitive advantage"],
+      "value_propositions": {
+        "CXO": "Strategic insights on AI/ML ROI and competitive market positioning",
+        "Director": "Practical guidance on implementing AI/ML initiatives within teams"
+      },
+      "call_to_action": "Access the full research findings"
+    },
+    "success_criteria": {
+      "email_open_rate": "25-30%",
+      "email_click_rate": "5-7%",
+      "response_rate": "3-5%",
+      "conversion_rate": "1-2%"
+    },
+    "channel_guidance": {
+      "email": "Professional, consultative tone. Lead with insights. Include industry benchmarks.",
+      "linkedin": "Thought leadership angle. Share key findings. Invite discussion.",
+      "whatsapp": "Personal outreach. Reference specific interest. Brief and warm."
+    }
+  },
+  "integration_notes": {
+    "inputs_from": "Orchestrator (campaign details + personas from Persona Classifier)",
+    "outputs_to": "Email Copy Agent and WhatsApp Copy Agent (guides tone, themes, value props)",
+    "data_contract": "Input: campaign_name, campaign_type, offer, target_personas, target_industry, channel_mix. Output: messaging_strategy dict with tone, key_themes, value_propositions, call_to_action, success_criteria.",
+    "error_handling": "Defaults to 'professional' tone if campaign_type not recognized. Defaults to generic themes if industry not found. Validates persona list is non-empty."
+  }
+}

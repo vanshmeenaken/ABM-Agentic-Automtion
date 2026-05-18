@@ -1,0 +1,134 @@
+﻿{
+  "agent_id": "persona_classifier",
+  "agent_name": "Persona Classifier Agent",
+  "description": "Maps prospect designations to buyer personas with confidence scoring. Analyzes seniority, function, and role to assign primary and secondary personas with confidence metrics.",
+  "model": "claude-sonnet-4-6",
+  "version": "2.0.0",
+  "status": "production",
+  "system_prompt": "You are a Persona Classification Expert specializing in B2B buyer personas. Your role is to map prospects to buyer personas based on their job designation, function, seniority level, and organizational context.\n\nPERSONA CLASSIFICATION FRAMEWORK\n\nPRIMARY PERSONAS:\n1. CXO (Chief Executive/Strategy)\n   - C-Level titles (CEO, CTO, CFO, CMO, COO, CHRO)\n   - Strategic decision makers\n   - Influence company-wide implementations\n   - Confidence indicators: Chief/President title, executive keywords\n\n2. Director (Department Leadership)\n   - VP, Director, Head of Department titles\n   - Tactical decision makers\n   - Lead team implementations\n   - Confidence indicators: Director/VP/Head title, department keywords\n\n3. Manager (Team Leadership)\n   - Manager, Senior Manager, Team Lead titles\n   - Operational decision makers\n   - Implement team-level solutions\n   - Confidence indicators: Manager/Lead title, team keywords\n\n4. Specialist (Individual Contributor)\n   - Specialist, Analyst, Engineer, Architect titles\n   - User-level decision makers\n   - Adopt tools and processes\n   - Confidence indicators: Specialist/Analyst title, role keywords\n\nCLASSIFICATION PROCESS:\n1. Extract job title and analyze seniority level\n2. Identify primary function (Marketing, Sales, Engineering, Operations, etc.)\n3. Map to primary persona based on seniority + function\n4. Identify secondary persona if role spans multiple functions\n5. Assign confidence score (0-100) based on match strength\n6. Flag for manual review if confidence <60%\n\nCONFIDENCE SCORING RULES:\n- 90-100: Exact title match + seniority + function alignment\n- 80-89: Strong seniority match + function keywords\n- 70-79: Seniority match + some function indicators\n- 60-69: Partial seniority match or unclear function\n- <60: Ambiguous title or missing context (flag for review)\n\nOUTPUT FORMAT:\nFor each prospect, provide:\n- Primary persona (CXO, Director, Manager, Specialist, or Other)\n- Confidence score (0-100)\n- Rationale (explain why this persona)\n- Secondary persona (if applicable)\n- Needs review flag (if confidence <60)",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "cleaned_prospects": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "email": {"type": "string"},
+            "first_name": {"type": "string"},
+            "last_name": {"type": "string"},
+            "designation": {"type": "string"},
+            "company_name": {"type": "string"},
+            "company_size": {"type": "string"},
+            "industry": {"type": "string"}
+          },
+          "required": ["email", "designation"]
+        }
+      },
+      "campaign_type": {
+        "type": "string",
+        "enum": ["Market Research", "Survey", "Consulting", "Expert Network", "Webinar", "Report Sales", "Competition Benchmarking", "Account Reactivation"]
+      },
+      "target_personas": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Available personas to classify into"
+      }
+    },
+    "required": ["cleaned_prospects", "campaign_type", "target_personas"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "classified_prospects": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "email": {"type": "string"},
+            "designation": {"type": "string"},
+            "primary_persona": {
+              "type": "object",
+              "properties": {
+                "persona": {"type": "string"},
+                "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
+                "rationale": {"type": "string"}
+              }
+            },
+            "secondary_persona": {
+              "type": "object",
+              "properties": {
+                "persona": {"type": "string"},
+                "confidence_score": {"type": "integer"},
+                "rationale": {"type": "string"}
+              }
+            },
+            "needs_review": {"type": "boolean"}
+          }
+        }
+      },
+      "persona_distribution": {
+        "type": "object",
+        "description": "Count of prospects per persona"
+      },
+      "average_confidence": {"type": "number"},
+      "low_confidence_count": {"type": "integer"},
+      "unclassifiable_count": {"type": "integer"}
+    }
+  },
+  "example_input": {
+    "cleaned_prospects": [
+      {
+        "email": "john.smith@techcorp.com",
+        "designation": "VP of Engineering",
+        "company_name": "TechCorp Inc",
+        "company_size": "500-1000",
+        "industry": "Software"
+      },
+      {
+        "email": "jane.doe@retailco.io",
+        "designation": "Marketing Manager",
+        "company_name": "RetailCo",
+        "company_size": "100-500",
+        "industry": "Retail"
+      }
+    ],
+    "campaign_type": "Market Research",
+    "target_personas": ["CXO", "Director", "Manager"]
+  },
+  "example_output": {
+    "classified_prospects": [
+      {
+        "email": "john.smith@techcorp.com",
+        "designation": "VP of Engineering",
+        "primary_persona": {
+          "persona": "Director",
+          "confidence_score": 92,
+          "rationale": "VP title + Engineering function maps to Director level. Strong seniority match with C-level adjacent authority."
+        },
+        "secondary_persona": {
+          "persona": "CXO",
+          "confidence_score": 70,
+          "rationale": "VP often influences C-level decisions in technical companies"
+        },
+        "needs_review": false
+      },
+      {
+        "email": "jane.doe@retailco.io",
+        "designation": "Marketing Manager",
+        "primary_persona": {
+          "persona": "Manager",
+          "confidence_score": 88,
+          "rationale": "Manager title + Marketing function = Manager persona. Clear role alignment."
+        },
+        "secondary_persona": null,
+        "needs_review": false
+      }
+    ],
+    "persona_distribution": {"Director": 1, "Manager": 1},
+    "average_confidence": 90,
+    "low_confidence_count": 0,
+    "unclassifiable_count": 0
+  },
+  "notes": "Production-ready implementation. Uses heuristic classification based on designation, seniority, and function. Ready for Anthropic API integration via tool use."
+}

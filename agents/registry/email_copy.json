@@ -1,0 +1,186 @@
+﻿{
+  "agent_id": "email_copy",
+  "agent_name": "Email Copy Agent",
+  "description": "Generates personalized email variations: primary + alternatives with A/B testing guidance",
+  "model": "claude-sonnet-4-6",
+  "version": "2.0.0",
+  "status": "production",
+  "system_prompt": "You are an expert B2B email copywriter specializing in ABM campaigns. Your role is to generate compelling, personalized email variations that drive opens, clicks, and responses.\n\nWhen generating email copy:\n1. **Subject Line:** 50 chars max. Use power words (Quick, Strategic, New, Limited). Personalize with name/company. Match tone from message strategy.\n2. **Preview Text:** 45-50 chars. Teaser that completes subject line and entices open.\n3. **Opening Hook:** Grab attention in first line. Reference prospect company, role, or pain point. Match tone.\n4. **Body Copy:** \n   - 3-5 sentences for high-level personas (CXO/Director)\n   - 4-7 sentences for mid-level (Manager)\n   - Keep it scannable with bullets or short paragraphs\n   - Lead with value, not features\n   - Address persona-specific pain points\n5. **Call-to-Action:** Clear, benefit-focused. Match campaign objective (access, download, schedule, register).\n6. **Personalization:** Use {{first_name}}, {{company_name}}, {{designation}} variables for dynamic content.\n\nCrafting Strategy:\n- **For CXO:** Focus on strategic impact, ROI, competitive advantage, board-level implications\n- **For Director:** Focus on team efficiency, accountability, operational excellence, measurable outcomes\n- **For Manager:** Focus on day-to-day improvements, quick wins, team engagement, tactical benefits\n- **For Specialist:** Focus on tool efficiency, task automation, skill development, time-saving\n\nTone Alignment:\n- **Professional:** Formal, credible, results-driven language\n- **Consultative:** Asking questions, advisory tone, collaborative\n- **Urgent:** FOMO, scarcity, time-sensitive language\n- **Friendly:** Conversational, warm, approachable\n- **Educational:** Teaching angle, thought leadership, insights-focused\n\nA/B Testing:\nProvide 3-4 variations testing different angles:\n1. Primary: Best overall approach\n2. Theme Variation: Different industry/pain point angle\n3. Short Form: Concise version for time-constrained prospects\n4. Pain Point Focus: Lead with specific challenge and solution\n\nOutput must include personalization variables for dynamic content insertion and A/B test recommendations.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "persona": {
+        "type": "string",
+        "enum": ["CXO", "Director", "Manager", "Specialist", "Individual Contributor"],
+        "description": "Target buyer persona"
+      },
+      "prospect": {
+        "type": "object",
+        "properties": {
+          "first_name": {"type": "string"},
+          "company_name": {"type": "string"},
+          "designation": {"type": "string"},
+          "email": {"type": "string"}
+        },
+        "required": ["first_name", "company_name", "designation"],
+        "description": "Prospect details for personalization"
+      },
+      "message_strategy": {
+        "type": "object",
+        "description": "Output from Message Strategy Agent (tone, themes, value props, CTA)"
+      },
+      "campaign_name": {
+        "type": "string",
+        "description": "Campaign name for context"
+      },
+      "offer": {
+        "type": "string",
+        "description": "What's being offered (report, consultation, research, etc.)"
+      }
+    },
+    "required": ["persona", "prospect", "message_strategy", "offer"]
+  },
+  "tools": [
+    {
+      "name": "generate_email_copy",
+      "description": "Generate primary email and alternative variations with personalization variables and A/B test recommendations",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "primary_email": {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "string",
+                "maxLength": 60,
+                "description": "Subject line with personalization vars like {{first_name}}"
+              },
+              "preview": {
+                "type": "string",
+                "maxLength": 50,
+                "description": "Preview text (what appears after subject in inbox)"
+              },
+              "body": {
+                "type": "string",
+                "description": "Email body with opening, value prop, body, and soft close"
+              },
+              "cta_text": {
+                "type": "string",
+                "description": "Call-to-action button text"
+              },
+              "estimated_read_time_seconds": {
+                "type": "integer",
+                "description": "Est. read time for email"
+              }
+            },
+            "required": ["subject", "body", "cta_text"]
+          },
+          "alternative_variations": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "properties": {
+                "subject": {"type": "string", "maxLength": 60},
+                "preview": {"type": "string", "maxLength": 50},
+                "body": {"type": "string"},
+                "cta_text": {"type": "string"},
+                "test_variant": {
+                  "type": "string",
+                  "enum": ["theme_variation", "short_form", "pain_point_focus", "relationship_focus"],
+                  "description": "What this variation tests"
+                }
+              },
+              "required": ["subject", "body", "test_variant"]
+            },
+            "description": "Alternative email variations for A/B testing"
+          },
+          "personalization_variables": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Variables for dynamic content: {{first_name}}, {{company_name}}, etc."
+          },
+          "ab_test_recommendations": {
+            "type": "object",
+            "properties": {
+              "winner_metric": {
+                "type": "string",
+                "enum": ["open_rate", "click_rate", "response_rate", "meeting_booked"],
+                "description": "What to optimize for"
+              },
+              "test_duration_days": {
+                "type": "integer",
+                "description": "Days to run test before deciding"
+              },
+              "minimum_sample_size": {
+                "type": "integer",
+                "description": "Min emails per variation for statistical significance"
+              }
+            }
+          }
+        },
+        "required": ["primary_email", "alternative_variations", "personalization_variables"]
+      }
+    }
+  ],
+  "example_input": {
+    "persona": "Director",
+    "prospect": {
+      "first_name": "Sarah",
+      "company_name": "TechCorp Inc",
+      "designation": "VP of Marketing",
+      "email": "sarah@techcorp.com"
+    },
+    "message_strategy": {
+      "messaging_strategy": {
+        "tone": "consultative",
+        "key_themes": ["digital transformation", "customer experience"],
+        "value_propositions": {
+          "Director": "Practical guidance on implementing transformation initiatives within teams"
+        },
+        "call_to_action": "Access the research findings"
+      }
+    },
+    "campaign_name": "Tech Market Research Initiative",
+    "offer": "Comprehensive market research report on AI/ML adoption"
+  },
+  "example_output": {
+    "primary_email": {
+      "subject": "Sarah, quick insight on digital transformation at TechCorp",
+      "preview": "Research on how peers handle DX...",
+      "body": "Hi Sarah,\n\nI'm curious about how TechCorp is approaching digital transformation...",
+      "cta_text": "Access the research findings",
+      "estimated_read_time_seconds": 45
+    },
+    "alternative_variations": [
+      {
+        "subject": "TechCorp's approach to customer experience transformation",
+        "preview": "New insights on CX leaders...",
+        "body": "Hi Sarah,\n\nWe're seeing strong interest from marketing leaders like you in customer experience...",
+        "cta_text": "Access the research findings",
+        "test_variant": "theme_variation"
+      }
+    ],
+    "personalization_variables": {
+      "first_name": "Sarah",
+      "company_name": "TechCorp Inc",
+      "designation": "VP of Marketing",
+      "persona": "Director",
+      "tone": "consultative",
+      "themes": ["digital transformation", "customer experience"]
+    },
+    "ab_test_recommendations": {
+      "winner_metric": "open_rate",
+      "test_duration_days": 7,
+      "minimum_sample_size": 50
+    }
+  },
+  "integration_notes": {
+    "inputs_from": "Orchestrator (prospect) + Message Strategy Agent (tone, themes, value props, CTA)",
+    "outputs_to": "Email sending platform or next stage (stores copy for campaigns)",
+    "data_contract": "Input: persona (CXO/Director/Manager/Specialist), prospect (name/company/designation), message_strategy (tone/themes/value_props), offer. Output: primary_email, alternative_variations (3-4), personalization_variables, ab_test_recommendations.",
+    "error_handling": "Defaults to professional tone if missing. Defaults to generic value prop if persona not in strategy. Validates subject < 60 chars, preview < 50 chars.",
+    "personalization_rules": "Use {{first_name}}, {{company_name}}, {{designation}} for dynamic insertion. All variations must support same variables for consistency."
+  }
+}

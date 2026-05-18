@@ -1,0 +1,156 @@
+{
+  "agent_id": "persona_classifier",
+  "name": "Persona Classifier Agent",
+  "version": "1.0",
+  "description": "Maps prospect designations and company context to buyer personas (CXO, Marketing, Operations, etc.) with confidence scoring.",
+  "workflow": "Prospect Intake + Dedupe Workflow",
+  "skills_used": ["B2B Persona Classification Skill"],
+  "model": "claude-sonnet-4-6",
+  "system_prompt": "You are the Persona Classifier Agent for Ken Research's ABM Revenue Automation Platform.\n\nYour job: Map prospect designations and context to buyer personas with confidence scores.\n\nINPUTS:\n- cleaned_prospects: Cleaned prospect records with normalized designations\n- campaign_type: Type of campaign (influences persona selection)\n- target_personas: Target personas for the campaign\n\nYOUR REASONING STEPS:\n1. Parse prospect designation string:\n   - Extract title, level, function\n   - Recognize common variants (VP/V.P./Vice President)\n2. Map designation to seniority level:\n   - C-suite: CEO, CXO, Founder, Partner\n   - VP: VP, SVP, EVP\n   - Director: Director, Senior Director, Associate Director\n   - Manager: Manager, Senior Manager, Group Manager\n   - Specialist: Specialist, Coordinator, Analyst\n3. Map designation to buyer function:\n   - Strategy/CXO: CEO, CTO, CFO, COO, CMO, CRO, President\n   - Marketing: Marketing Manager, VP Marketing, Director Marketing, CMO\n   - Operations: Operations Manager, VP Ops, Director Ops, COO\n   - Finance: CFO, Finance Manager, Accounting Manager\n   - IT/Engineering: CTO, Engineering Manager, IT Manager\n   - Procurement: Procurement Manager, Sourcing Manager, Vendor Manager\n   - Supply Chain: Supply Chain Manager, Logistics Manager, SCM\n   - Product: Product Manager, VP Product, Chief Product Officer\n   - Sales: VP Sales, Sales Director, Account Executive\n4. Score persona confidence (0–100):\n   - Perfect match (title + function + seniority): 90+\n   - Strong match (title + function): 70-89\n   - Moderate match (seniority + context): 50-69\n   - Weak match (seniority only): 30-49\n   - No clear match: <30\n5. Assign primary + secondary personas based on campaign target\n6. Flag low-confidence assignments for human review\n\nPLATFORM INVARIANTS:\n- Map to standard persona names: CXO, Strategy, Marketing, Operations, Finance, IT, Procurement, Supply Chain, Product, Sales, Investor, HR\n- Always assign at least a primary persona (default to generic based on seniority)\n- Provide rationale for assignment\n- Flag confidence < 50 for human review\n- Do NOT discard records due to unclear designation\n\nFAILURE MODES:\n- Designation too ambiguous → Assign to generic seniority-based persona + flag\n- Missing designation → Flag for human review, do not classify\n- Unrecognized title pattern → Use seniority inference + flag\n\nOUTPUT: Use the create_persona_classification_result tool to return structured output.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "cleaned_prospects": {
+        "type": "array",
+        "description": "Cleaned prospect records",
+        "items": {"type": "object"}
+      },
+      "campaign_type": {
+        "type": "string",
+        "enum": [
+          "Market Research",
+          "Survey",
+          "Consulting",
+          "Expert Network",
+          "Webinar",
+          "Report Sales",
+          "Competition Benchmarking",
+          "Account Reactivation"
+        ],
+        "description": "Campaign type to inform persona selection"
+      },
+      "target_personas": {
+        "type": "array",
+        "description": "Target personas for the campaign",
+        "items": {"type": "string"}
+      }
+    },
+    "required": ["cleaned_prospects", "campaign_type", "target_personas"]
+  },
+  "tools": [
+    {
+      "name": "create_persona_classification_result",
+      "description": "Return classified prospects with persona assignments and confidence scores",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "classified_prospects": {
+            "type": "array",
+            "description": "Prospects with persona assignments",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {"type": "string"},
+                "designation": {"type": "string"},
+                "company_name": {"type": "string"},
+                "primary_persona": {
+                  "type": "object",
+                  "properties": {
+                    "persona": {"type": "string"},
+                    "confidence_score": {"type": "integer"},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "secondary_persona": {
+                  "type": "object",
+                  "properties": {
+                    "persona": {"type": "string"},
+                    "confidence_score": {"type": "integer"},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "seniority_level": {"type": "string"},
+                "function": {"type": "string"},
+                "needs_review": {"type": "boolean"}
+              }
+            }
+          },
+          "persona_distribution": {
+            "type": "object",
+            "description": "Count of prospects per persona",
+            "additionalProperties": {"type": "integer"}
+          },
+          "low_confidence_count": {
+            "type": "integer",
+            "description": "Number of records with confidence < 50"
+          },
+          "unclassifiable_count": {
+            "type": "integer",
+            "description": "Records without designation or missing info"
+          },
+          "average_confidence": {
+            "type": "number",
+            "description": "Average confidence score across all records"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Warnings or flags for human review"
+          }
+        },
+        "required": ["classified_prospects", "persona_distribution", "low_confidence_count", "unclassifiable_count", "average_confidence"]
+      }
+    }
+  ],
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "classified_prospects": {"type": "array"},
+      "persona_distribution": {"type": "object"},
+      "low_confidence_count": {"type": "integer"},
+      "unclassifiable_count": {"type": "integer"},
+      "average_confidence": {"type": "number"},
+      "notes": {"type": "string"}
+    }
+  },
+  "example_input": {
+    "cleaned_prospects": [
+      {
+        "email": "rajesh.kumar@automotive-oem.co.in",
+        "designation": "VP Operations",
+        "company_name": "India Automotive OEM Ltd"
+      }
+    ],
+    "campaign_type": "Survey",
+    "target_personas": ["CXO", "Operations"]
+  },
+  "example_output": {
+    "classified_prospects": [
+      {
+        "email": "rajesh.kumar@automotive-oem.co.in",
+        "designation": "VP Operations",
+        "company_name": "India Automotive OEM Ltd",
+        "primary_persona": {
+          "persona": "Operations",
+          "confidence_score": 95,
+          "rationale": "VP Operations title directly matches Operations function and VP seniority level"
+        },
+        "secondary_persona": {
+          "persona": "CXO",
+          "confidence_score": 60,
+          "rationale": "VP-level executive with strategic responsibility, potential C-suite candidate"
+        },
+        "seniority_level": "VP",
+        "function": "Operations",
+        "needs_review": false
+      }
+    ],
+    "persona_distribution": {
+      "Operations": 1,
+      "CXO": 1
+    },
+    "low_confidence_count": 0,
+    "unclassifiable_count": 0,
+    "average_confidence": 90.0,
+    "notes": "All prospects successfully classified. No low-confidence assignments."
+  }
+}

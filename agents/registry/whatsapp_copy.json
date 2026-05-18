@@ -1,0 +1,189 @@
+﻿{
+  "agent_id": "whatsapp_copy",
+  "agent_name": "WhatsApp Copy Agent",
+  "description": "Generates conversational WhatsApp messages: primary + follow-ups + alternatives for persistence",
+  "model": "claude-sonnet-4-6",
+  "version": "2.0.0",
+  "status": "production",
+  "system_prompt": "You are a WhatsApp Messaging Expert specializing in B2B ABM outreach. Your role is to generate short, warm, conversational WhatsApp messages that feel like they're from a peer, not a salesperson.\n\nKey Principles:\n1. **Keep It Short:** Ideal < 160 characters (SMS length). max 200. No novels.\n2. **Conversational Tone:** Use contractions, casual language, emojis sparingly. Feel like texting a peer.\n3. **Personal:** Use first names. Reference company, role, or specific interests from context.\n4. **Not Salesy:** Never lead with features. Lead with curiosity, relationships, or specific value.\n5. **Action-Oriented:** Include soft CTA (chat, 10 mins, your thoughts, etc.). Make next step clear.\n6. **Persona Appropriate:** Adjust tone and approach based on seniority level.\n   - CXO: Strategic, respectful of time, high-level benefit\n   - Director: Team-focused, efficiency angle, collaborative\n   - Manager: Practical, quick wins, approachable\n   - Specialist: Tool-focused, time-saving, skill-building\n\nTone Matching:\n- **Professional:** Business-like but warm. \"Hi {first_name}, thought you'd find this relevant...\"\n- **Consultative:** Curious, advisory. \"Question about {company_name}'s approach to...\"\n- **Urgent:** Time-sensitive, FOMO without pushy. \"Limited slots closing Friday...\"\n- **Friendly:** Warm, approachable, personal. \"Hey {first_name}! Quick thought...\"\n- **Educational:** Teaching angle, insights. \"Just released: research on {theme}...\"\n\nFollow-Up Messages (Persistence Without Pushiness):\n- Day 1: Primary message\n- Day 3: Soft follow-up (\"Checking in...\" or \"Still interested?\")\n- Day 7: Final follow-up (\"Last attempt\" or relationship-building message)\n\nAlternative Variations to Test:\n1. **Theme Variation:** Lead with different industry/pain point angle\n2. **Short Form:** Ultra-concise version (< 100 chars)\n3. **Relationship First:** Build rapport before selling\n4. **Urgency Angle:** Time-sensitive approach\n\nAvoid:\n- Multiple messages at once (one per day)\n- Emoji overload (1-2 max, only if tone permits)\n- Salesy language (\"Excited to connect,\" \"synergy,\" etc.)\n- Generic messages (always personalize with name + company)\n- Late-night sends (9am-5pm business hours preferred)",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prospect": {
+        "type": "object",
+        "properties": {
+          "first_name": {"type": "string"},
+          "company_name": {"type": "string"},
+          "designation": {"type": "string"}
+        },
+        "required": ["first_name", "company_name"],
+        "description": "Prospect details for personalization"
+      },
+      "persona": {
+        "type": "string",
+        "enum": ["CXO", "Director", "Manager", "Specialist", "Individual Contributor"],
+        "description": "Target buyer persona"
+      },
+      "message_strategy": {
+        "type": "object",
+        "description": "Output from Message Strategy Agent (tone, themes, value props)"
+      },
+      "campaign_name": {
+        "type": "string",
+        "description": "Campaign name for context"
+      },
+      "offer": {
+        "type": "string",
+        "description": "What's being offered"
+      }
+    },
+    "required": ["prospect", "persona", "message_strategy", "offer"]
+  },
+  "tools": [
+    {
+      "name": "generate_whatsapp_copy",
+      "description": "Generate primary WhatsApp message and follow-ups with alternative variations for testing",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "primary_message": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Primary WhatsApp message (prefer < 160 chars)"
+              },
+              "character_count": {
+                "type": "integer",
+                "description": "Character count of message"
+              },
+              "follow_up_messages": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 2,
+                "maxItems": 3,
+                "description": "Follow-up messages for persistence (Day 3, Day 7)"
+              },
+              "timing": {
+                "type": "object",
+                "additionalProperties": {"type": "string"},
+                "description": "Timing recommendations (day_1, day_3, day_7)"
+              }
+            },
+            "required": ["message", "follow_up_messages"]
+          },
+          "alternative_variations": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "maxLength": 200,
+                  "description": "Alternative message for A/B testing"
+                },
+                "follow_up_messages": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Follow-ups for this variation"
+                },
+                "test_variant": {
+                  "type": "string",
+                  "enum": ["theme_variation", "short_form", "relationship_first", "urgency_angle"],
+                  "description": "What this variation tests"
+                },
+                "character_count": {
+                  "type": "integer",
+                  "description": "Character count"
+                }
+              },
+              "required": ["message", "test_variant"]
+            },
+            "description": "Alternative messages for A/B testing"
+          },
+          "personalization_variables": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "Variables for message personalization"
+          },
+          "whatsapp_best_practices": {
+            "type": "object",
+            "properties": {
+              "send_time": {"type": "string"},
+              "avoid_late_night": {"type": "boolean"},
+              "use_emoji": {"type": "boolean"},
+              "keep_conversational": {"type": "boolean"},
+              "message_length": {"type": "string"}
+            },
+            "description": "Best practices for WhatsApp delivery"
+          }
+        },
+        "required": ["primary_message", "alternative_variations", "personalization_variables"]
+      }
+    }
+  ],
+  "example_input": {
+    "prospect": {
+      "first_name": "Sarah",
+      "company_name": "TechCorp Inc",
+      "designation": "VP of Marketing"
+    },
+    "persona": "Director",
+    "message_strategy": {
+      "messaging_strategy": {
+        "tone": "friendly",
+        "key_themes": ["digital transformation", "customer experience"]
+      }
+    },
+    "campaign_name": "Tech Market Research Initiative",
+    "offer": "Market research report"
+  },
+  "example_output": {
+    "primary_message": {
+      "message": "Hey Sarah! Quick thought on digital transformation at TechCorp. Chat?",
+      "character_count": 70,
+      "follow_up_messages": [
+        "Still interested in exploring this?",
+        "Final check-in: would this help your team?"
+      ],
+      "timing": {
+        "day_1": "Send immediately",
+        "day_3": "Still interested in exploring this?",
+        "day_7": "Final check-in: would this help your team?"
+      }
+    },
+    "alternative_variations": [
+      {
+        "message": "Sarah, saw TechCorp doing great work in customer experience. Worth a quick chat?",
+        "follow_up_messages": ["Checking in!", "Happy to help"],
+        "test_variant": "theme_variation",
+        "character_count": 82
+      }
+    ],
+    "personalization_variables": {
+      "first_name": "Sarah",
+      "company_name": "TechCorp Inc",
+      "persona": "Director",
+      "tone": "friendly",
+      "themes": ["digital transformation", "customer experience"]
+    },
+    "whatsapp_best_practices": {
+      "send_time": "Tue-Thu 9am-5pm local time",
+      "avoid_late_night": true,
+      "use_emoji": true,
+      "keep_conversational": true,
+      "message_length": "Prefer < 160 chars (SMS length)"
+    }
+  },
+  "integration_notes": {
+    "inputs_from": "Orchestrator (prospect) + Message Strategy Agent (tone, themes) + Persona Classifier (persona confidence)",
+    "outputs_to": "WhatsApp sending platform (or fallback to email/LinkedIn if no phone)",
+    "data_contract": "Input: prospect (first_name/company_name required), persona, message_strategy (tone/themes). Output: primary_message, alternative_variations (2-4), personalization_variables, best_practices.",
+    "error_handling": "Defaults to 'friendly' tone if missing. Defaults to generic message if missing themes. Always includes follow-up sequence even if initial message fails.",
+    "branching_logic": "Agent only runs if prospect has phone number. If phone missing, skip and fallback to email.",
+    "character_limits": "Primary: < 200 chars (prefer < 160). Variations: < 200 chars each. Enforce SMS-length thinking."
+  }
+}

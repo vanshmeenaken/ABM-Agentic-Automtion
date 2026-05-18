@@ -1,0 +1,155 @@
+{
+  "agent_id": "data_quality",
+  "name": "Data Quality Agent",
+  "version": "1.0",
+  "description": "Cleans raw prospect records, normalizes fields, flags duplicates and low-confidence records before campaign assignment.",
+  "workflow": "Prospect Intake + Dedupe Workflow",
+  "skills_used": ["Prospect Data Cleaning Skill", "Pipedrive Hygiene Skill"],
+  "model": "claude-sonnet-4-6",
+  "system_prompt": "You are the Data Quality Agent for Ken Research's ABM Revenue Automation Platform.\n\nYour job: Clean raw prospect records, normalize fields, flag duplicates and low-confidence records.\n\nINPUTS:\n- raw_prospects: Undeduped, unenriched records from Prospect Research agent\n- campaign_id: Campaign identifier\n- dedup_scope: Scope for deduplication (campaign / platform / pipedrive)\n\nYOUR REASONING STEPS:\n1. Normalize email addresses:\n   - Convert to lowercase\n   - Trim whitespace\n   - Validate format\n   - Flag invalid emails\n2. Normalize phone numbers:\n   - E.164 format\n   - Complete country codes based on region\n3. Clean company names:\n   - Remove Inc/Ltd/Pvt suffixes for matching (preserve for display)\n   - Trim whitespace\n   - Standardize case\n4. Clean designation strings:\n   - Standardize common variants (MD → Managing Director, VP Mktg → VP Marketing)\n   - Trim whitespace\n5. Run deduplication checks:\n   - Primary: Email exact match\n   - Secondary: Phone + company exact match\n   - Tertiary: Check against Pipedrive person records (if dedup_scope includes pipedrive)\n6. Score each record (0–100):\n   - Valid email format: 25 points\n   - Valid phone number: 15 points\n   - Designation string clarity: 20 points\n   - Company name completeness: 20 points\n   - Field completeness overall: 20 points\n7. Flag records:\n   - Duplicates for human review\n   - Low-confidence (score < 40) for human review\n   - Records with >30% duplicate rate trigger ICP refinement flag\n\nPLATFORM INVARIANTS:\n- Never discard a record → Always flag instead\n- Duplicates require human review before campaign assignment\n- Log every field modification\n- Preserve original data in raw_source_data field\n- Return all records with confidence scores\n\nFAILURE MODES:\n- All records below score 40 → Flag entire batch for human review, halt campaign assignment\n- >30% duplicate rate → Flag for ICP refinement review\n- Missing required fields → Flag but do not discard\n\nOUTPUT: Use the create_data_quality_result tool to return structured output.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "raw_prospects": {
+        "type": "array",
+        "description": "Undeduped prospect records",
+        "items": {"type": "object"}
+      },
+      "campaign_id": {
+        "type": "string",
+        "description": "Campaign identifier"
+      },
+      "dedup_scope": {
+        "type": "string",
+        "enum": ["campaign", "platform", "pipedrive"],
+        "description": "Deduplication scope"
+      }
+    },
+    "required": ["raw_prospects", "campaign_id", "dedup_scope"]
+  },
+  "tools": [
+    {
+      "name": "create_data_quality_result",
+      "description": "Return cleaned prospect data with quality scores and flags",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cleaned_prospects": {
+            "type": "array",
+            "description": "Cleaned records with normalized fields",
+            "items": {
+              "type": "object",
+              "properties": {
+                "first_name": {"type": "string"},
+                "last_name": {"type": "string"},
+                "email": {"type": "string"},
+                "phone": {"type": "string"},
+                "designation": {"type": "string"},
+                "company_name": {"type": "string"},
+                "confidence_score": {"type": "integer"},
+                "is_duplicate": {"type": "boolean"},
+                "is_low_confidence": {"type": "boolean"},
+                "corrections_made": {"type": "array", "items": {"type": "string"}},
+                "raw_source_data": {"type": "object"}
+              }
+            }
+          },
+          "duplicate_flags": {
+            "type": "array",
+            "description": "Records flagged as potential duplicates",
+            "items": {"type": "object"}
+          },
+          "low_confidence_flags": {
+            "type": "array",
+            "description": "Records with confidence score < 40",
+            "items": {"type": "object"}
+          },
+          "field_corrections": {
+            "type": "object",
+            "description": "Summary of corrections made by field",
+            "properties": {
+              "emails_normalized": {"type": "integer"},
+              "phones_normalized": {"type": "integer"},
+              "company_names_cleaned": {"type": "integer"},
+              "designations_standardized": {"type": "integer"}
+            }
+          },
+          "confidence_score_distribution": {
+            "type": "object",
+            "description": "Histogram of confidence scores",
+            "additionalProperties": {"type": "integer"}
+          },
+          "duplicate_rate": {
+            "type": "number",
+            "description": "Percentage of records flagged as duplicates"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Warnings or flags for human review"
+          }
+        },
+        "required": ["cleaned_prospects", "duplicate_flags", "low_confidence_flags", "field_corrections", "confidence_score_distribution"]
+      }
+    }
+  ],
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "cleaned_prospects": {"type": "array"},
+      "duplicate_flags": {"type": "array"},
+      "low_confidence_flags": {"type": "array"},
+      "field_corrections": {"type": "object"},
+      "confidence_score_distribution": {"type": "object"},
+      "duplicate_rate": {"type": "number"},
+      "notes": {"type": "string"}
+    }
+  },
+  "example_input": {
+    "raw_prospects": [
+      {
+        "first_name": "Rajesh",
+        "last_name": "Kumar",
+        "email": "RAJESH.KUMAR@automotive-oem.co.in",
+        "phone": "919876543210",
+        "designation": "VP Ops",
+        "company_name": "India Automotive OEM Ltd Inc"
+      }
+    ],
+    "campaign_id": "camp-001",
+    "dedup_scope": "platform"
+  },
+  "example_output": {
+    "cleaned_prospects": [
+      {
+        "first_name": "Rajesh",
+        "last_name": "Kumar",
+        "email": "rajesh.kumar@automotive-oem.co.in",
+        "phone": "+91-9876543210",
+        "designation": "VP Operations",
+        "company_name": "India Automotive OEM Ltd",
+        "confidence_score": 95,
+        "is_duplicate": false,
+        "is_low_confidence": false,
+        "corrections_made": [
+          "email: normalized to lowercase",
+          "phone: converted to E.164 format",
+          "designation: standardized VP Ops → VP Operations",
+          "company_name: removed Inc suffix"
+        ]
+      }
+    ],
+    "duplicate_flags": [],
+    "low_confidence_flags": [],
+    "field_corrections": {
+      "emails_normalized": 1,
+      "phones_normalized": 1,
+      "company_names_cleaned": 1,
+      "designations_standardized": 1
+    },
+    "confidence_score_distribution": {
+      "90-100": 1
+    },
+    "duplicate_rate": 0.0,
+    "notes": "All records passed quality checks. No duplicates detected."
+  }
+}

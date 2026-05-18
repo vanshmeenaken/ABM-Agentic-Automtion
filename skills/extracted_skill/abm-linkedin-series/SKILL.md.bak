@@ -1,0 +1,214 @@
+---
+name: abm-linkedin-series
+description: Generate a 3-message LinkedIn ABM outreach series and a companion ABM Master Document for any completed Ken Research industry report. ALWAYS trigger this skill when Namit or any Ken Research team member wants to run a LinkedIn ABM campaign for a completed report, wants to draft outreach messages for a new report, mentions "ABM messages", "LinkedIn sequence", "message series", "ABM campaign", "LinkedIn outreach for [report title]", or wants to convert a completed study into a demand-generation campaign. Also trigger when a report brief or ABM Master Doc is pasted alongside a request to create messages, campaign content, or a target outreach series. Produces: (1) a 3-message LinkedIn DM series with A/B opening hook variants and send-timing guidance, and (2) a structured ABM Master Document covering project summary, TG analysis, differentiators, pain points, and illustrative talking points.
+---
+
+# ABM LinkedIn Series — Ken Research
+
+## What This Skill Does
+
+Takes a completed Ken Research report title and/or brief and produces:
+
+1. **3-Message LinkedIn DM Series** — casual, human-voice outreach across ice-breaker, sample share, and FOMO messages, with A/B opening hook variants and recommended send timing
+2. **ABM Master Document** — structured campaign reference doc covering project summary, TG definition, persona pain points, differentiators, and illustrative talking points
+
+---
+
+## Step 1: Clarifying Questions
+
+Before generating, ask Namit these questions if not already answered in the brief:
+
+**Required inputs:**
+- Report title (always required)
+- One-line description of what the report covers (if not in brief)
+- The "hero number" or headline stat — if the report has one (e.g., "57 projects", "SAR 206 Bn CAPEX"). If not available, flag that messaging will lead with a market insight instead.
+- Broad TG designations (e.g., CXOs, VPs Sales, Regional Heads) — infer company types from the market title, but confirm if ambiguous
+- Any specific timing hook for the FOMO message (e.g., "FY2026 tender window is open") — optional, skill will infer if not provided
+- Is there a sample / illustrative to attach for Message 2? If yes, note as confirmed. If not, flag as placeholder.
+
+**Do not ask if already inferable from:**
+- The report title (geography, sector, TG company type)
+- The ABM Master Doc pasted by the user
+- The report brief pasted by the user
+
+---
+
+## Step 2: Generate the ABM Master Document
+
+Structure the Master Doc as follows. Adapt sections to fit the report type — not all sections apply identically to every study.
+
+---
+
+### ABM Master Document Structure
+
+```
+| [REPORT TITLE] | ABM Campaign Master Document |
+| Project Summary | Target Group Analysis | LinkedIn Campaign Framework | Content Team Brief |
+| Prepared for: [Client if applicable] | Market: [Geography] | Segment: [Product/sector] |
+```
+
+---
+
+#### SECTION 1 — Project Summary
+
+**1.1 What Is This Project?**
+Describe what was delivered — not as a generic market report, but as a specific intelligence product. Emphasise the project-level or primary-research nature of the work. Pull from the brief or infer from report title.
+
+**1.2 What the Intelligence Covers**
+Two-column table:
+- Left: Report-level data points (methodology, coverage, classification, outlook)
+- Right: Sector/product-specific data points (volumes, specifications, geographies, stakeholder mapping)
+
+**1.3 Why This Matters — Business Context**
+2-3 sentences on the macro driver (Vision 2030, regulatory shift, sector growth inflection, etc.) and why the timing is commercially relevant for the TG.
+
+**Commercial Goal box:**
+State the campaign objective clearly: book qualified meetings and run need-discovery conversations. Note if productisation is a future consideration only if mentioned by Namit — do not assume.
+
+---
+
+#### SECTION 2 — ABM Framework
+
+**2.1 Target Group Definition**
+Table with columns: Company Type | Profile | Examples
+- Infer 4-5 company types from the market title and sector
+- Pull real company names where known (do not fabricate — if unsure, leave as "[examples — confirm before use]")
+
+**2.2 Target Designations for LinkedIn Outreach**
+Three-column table: Primary Targets (Decision Makers) | Secondary Targets (Influencers) | Geography Filter
+- Primary: VP/Director level and above in Sales, BD, Strategy, or relevant function
+- Secondary: Manager level in BD, Marketing, Tendering, or Account Management
+- Geography: Infer from report market. Always include the HQ geography of likely manufacturers (India, Europe, etc.) alongside the target market geography.
+
+**2.3 Need, Desire & Pain Point**
+Three-column table: NEED | DESIRE | PAIN POINT — one line each, specific to the sector.
+
+Then: Specific Pain Points by Persona table — 4-5 personas with a verbatim-style quote per persona capturing their core frustration. Write in first person, informal, as they would say it internally.
+
+**2.4 Differentiator — What Makes This Different**
+Three-column table: What Others Offer | What This Offers | Why It Matters
+- 5 rows minimum
+- Always contrast generic market data vs. Ken Research's project-level or primary-research output
+
+**2.5 Illustrative — Sample Proof of Value**
+Describe what the illustrative / dashboard snapshot should show for Message 2 attachment.
+
+Key Illustrative Talking Point box: the single stat or insight that "makes a VP of Sales sit up." Lead with this in Message 3 if no timing hook is available.
+
+**[MANUAL INPUT NEEDED: Confirm illustrative / sample dashboard is prepared before Message 2 send]**
+
+---
+
+## Step 3: Generate the 3-Message LinkedIn DM Series
+
+### Voice and Style Rules
+
+- Casual, human-voice LinkedIn DM register
+- Minimal grammar correction only — preserve cadence, short punchy lines, natural pauses
+- "let's" not "lets" — the only correction applied consistently
+- No formal openers, no sign-offs, no "I hope this finds you well"
+- No hollow adjectives ("comprehensive", "cutting-edge", "robust")
+- No AI-style preamble
+- Maintain professional power balance — write as a peer, not a vendor
+- Lead with market insight OR hero number — vary by A/B variant
+- One CTA per message. Never stack two asks.
+
+---
+
+### Message 1 — Ice Breaker
+
+**Goal:** Establish relevance, signal credibility, earn a reply or connection.
+**Send timing:** Day 1 of campaign
+
+**Format:**
+- 3-5 lines maximum
+- Open with a market observation or the hero stat (A/B variants below)
+- One sentence on what the study covers — specific, not generic
+- One sentence on why the timing is relevant now
+- Close with a soft CTA: propose a specific time slot for a call (default: "around [time] GST tomorrow" or "this week")
+
+**A/B Opening Hook Variants:**
+- **Variant A — Market Insight Led:** Opens with an observation about the market, regulatory shift, or macro trend. Positions Ken Research as having caught something others haven't.
+- **Variant B — Hero Number Led:** Opens with the headline stat from the study. Creates pattern interrupt. Works better for data-heavy reports.
+
+Generate both variants in full.
+
+---
+
+### Message 2 — Sample Share
+
+**Goal:** Move from interest to tangibility. Get them to consume the sample.
+**Send timing:** Day 3-4 after Message 1 (or after a reply to Message 1, whichever comes first)
+
+**Format:**
+- 2-3 lines only — intentionally minimal
+- Reference Message 1 lightly without restating it
+- Signal the attachment
+- One soft CTA: "let's connect after you've had a look"
+
+**[MANUAL INPUT NEEDED: Sample / illustrative dashboard to be attached before send]**
+
+---
+
+### Message 3 — FOMO / Fallback
+
+**Goal:** Re-engage non-responders. Create urgency without desperation. Leave on a networking note if no urgency hook is available.
+**Send timing:** Day 7-10 after Message 2
+
+**Format:**
+- 4-6 lines
+- Open by explicitly releasing follow-up pressure ("no follow-up needed on the sample")
+- If a timing hook exists: surface the window — frame it as a heads-up, not a sales push
+- If no timing hook: use the hero number or a market insight to make one observation that's genuinely useful to them
+- Close with a fallback CTA: offer to connect on how they are currently tracking the relevant metric / planning for the market — peer-to-peer framing
+
+---
+
+## Step 4: Output Format
+
+Present in this order:
+
+1. **ABM Master Document** — full structured doc inline in chat (DOCX only if Namit explicitly requests it)
+2. **Message Series** — clearly labelled sections:
+   - Message 1: Variant A / Variant B
+   - Message 2
+   - Message 3
+3. **Send Timing Summary** — a simple 3-row table: Message | Recommended Send Day | Notes
+4. **Manual Input Checklist** — bullet list of items that must be confirmed before campaign goes live (sample attachment, company name examples, any stat placeholders)
+
+---
+
+## Quality Checks Before Output
+
+- No em dashes anywhere in the output
+- No pronoun contractions involving "I" or "we" in the Master Doc prose (spell out: "it is", "we will")
+- Message voice: if any message reads like a sales email, rewrite it as a DM
+- Hero number: present in at least one of the three messages
+- FOMO message: ends on a peer-to-peer networking note, not a hard close
+- All placeholder data clearly marked with [BRACKETS]
+- TG company examples: flag any that are inferred and need confirmation
+
+---
+
+## Reference Examples
+
+### Voice Benchmark — What Good Looks Like
+
+**Message 1 (good):**
+> Hi [First Name], we just completed a project-led intelligence study on Saudi Arabia's water infrastructure pipeline - tracking procurement activity across NWC, MEWA, SWPC, SWCC, and MOMAH, the five authorities driving the bulk of pipe-intensive capex in the Kingdom through 2028.
+>
+> The study maps 400+ confirmed and announced projects classified by procurement readiness, pipeline demand in km, and DI applicability - not top-down market forecasts. With FY2026 tender-prep already underway across several corridors, it will be relevant to select the right tenders and plan investment accordingly.
+>
+> Worth a quick look - let's connect over a call around 12:00 PM GST time tomorrow?
+
+**Message 2 (good):**
+> Hey, attaching a quick sample for your reference. Let's connect after you consume this through. [Attachments to follow]
+
+**Message 3 (good):**
+> Hey [First Name], no follow-up needed on the sample - timing may just not be right.
+>
+> One thing worth flagging: the FY2026 tender-prep window across several NWC and MEWA corridors is already open. Companies that have mapped the right XX projects out of XX are already in EPC conversations.
+>
+> Either way, let's network and connect once on how you are tracking DI pipe forecasted demand and planning pipeline for future.
+
+Use these as the benchmark for cadence, line breaks, and register. Do not copy them — generate fresh versions calibrated to the specific report.

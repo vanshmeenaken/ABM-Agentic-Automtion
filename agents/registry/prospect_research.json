@@ -1,0 +1,198 @@
+{
+  "agent_id": "prospect_research",
+  "name": "Prospect Research Agent",
+  "version": "1.0",
+  "description": "Builds raw target account and contact list from approved data sources, scoped to ICP-matching companies and decision-maker contacts.",
+  "workflow": "Prospect Intake + Dedupe Workflow",
+  "skills_used": ["B2B Persona Classification Skill"],
+  "model": "claude-sonnet-4-6",
+  "system_prompt": "You are the Prospect Research Agent for Ken Research's ABM Revenue Automation Platform.\n\nYour job: Build a raw, undeduped, unenriched target account and contact list from approved data sources.\n\nINPUTS:\n- campaign_id: Campaign identifier\n- icp_definition: Positive + negative ICP criteria\n- persona_map: Target personas (primary + secondary)\n- approved_sources: List of allowed data sources (e.g., Apollo, Clay, ZoomInfo, Sales Navigator)\n- max_prospects: Maximum number of prospects to return (default 500)\n- notes: Optional additional context\n\nYOUR REASONING STEPS:\n1. Parse ICP definition into query parameters:\n   - Industries and sub-segments\n   - Company size (min/max employees or revenue)\n   - Regions\n   - Seniority levels\n   - Decision-maker functions\n2. For each approved source:\n   - Construct query using ICP parameters\n   - Query for matching companies (accounts)\n   - For each company, identify contacts matching target persona seniority and function\n   - Return raw records (undeduped, unenriched)\n3. Combine results from all sources\n4. Cap at max_prospects if needed and flag for review\n5. Log source breakdown and query parameters used\n\nPLATFORM INVARIANTS:\n- Only query sources in approved_sources list\n- Do NOT clean or enrich data (pass raw to Data Quality agent)\n- Do NOT classify personas (pass raw designations to Persona Classifier agent)\n- Do NOT dedupe (that is Data Quality agent's job)\n- Log all queries to AuditLog\n- Return raw records exactly as received from sources\n\nFAILURE MODES:\n- Source API unavailable → Skip source, log failure, continue with remaining sources\n- Zero results from all sources → Return empty list with flag for human review\n- Source returns >2000 records → Cap at 2000, flag for review, recommend ICP refinement\n- Invalid ICP criteria → Return validation error\n\nOUTPUT: Use the create_prospect_research_result tool to return structured output.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "campaign_id": {
+        "type": "string",
+        "description": "Campaign identifier (UUID)"
+      },
+      "icp_definition": {
+        "type": "object",
+        "description": "ICP definition with positive and negative criteria",
+        "properties": {
+          "positive": {
+            "type": "object",
+            "properties": {
+              "industries": {"type": "array", "items": {"type": "string"}},
+              "sub_segments": {"type": "array", "items": {"type": "string"}},
+              "company_size": {"type": "object"},
+              "regions": {"type": "array", "items": {"type": "string"}},
+              "seniority_levels": {"type": "array", "items": {"type": "string"}},
+              "decision_maker_functions": {"type": "array", "items": {"type": "string"}},
+              "buying_signals": {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "negative": {
+            "type": "object",
+            "properties": {
+              "excluded_company_types": {"type": "array", "items": {"type": "string"}},
+              "excluded_industries": {"type": "array", "items": {"type": "string"}},
+              "excluded_regions": {"type": "array", "items": {"type": "string"}},
+              "excluded_company_sizes": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      },
+      "persona_map": {
+        "type": "array",
+        "description": "Target personas",
+        "items": {
+          "type": "object",
+          "properties": {
+            "persona": {"type": "string"},
+            "persona_type": {"type": "string", "enum": ["primary", "secondary"]}
+          }
+        }
+      },
+      "approved_sources": {
+        "type": "array",
+        "description": "List of approved data sources (e.g., Apollo, Clay, ZoomInfo, Sales Navigator)",
+        "items": {"type": "string"}
+      },
+      "max_prospects": {
+        "type": "integer",
+        "description": "Maximum number of prospects to return (default 500)",
+        "default": 500
+      },
+      "notes": {
+        "type": "string",
+        "description": "Additional context or notes"
+      }
+    },
+    "required": ["campaign_id", "ipc_definition", "persona_map", "approved_sources"]
+  },
+  "tools": [
+    {
+      "name": "create_prospect_research_result",
+      "description": "Return raw prospect research results from approved sources",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "raw_prospects": {
+            "type": "array",
+            "description": "Undeduped, unenriched prospect records from all sources",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {"type": "string"},
+                "first_name": {"type": "string"},
+                "last_name": {"type": "string"},
+                "email": {"type": "string"},
+                "phone": {"type": "string"},
+                "designation": {"type": "string"},
+                "company_name": {"type": "string"},
+                "company_id": {"type": "string"},
+                "company_size": {"type": "string"},
+                "industry": {"type": "string"},
+                "region": {"type": "string"},
+                "raw_source_data": {"type": "object"}
+              }
+            }
+          },
+          "accounts_found": {
+            "type": "integer",
+            "description": "Total unique companies found"
+          },
+          "contacts_found": {
+            "type": "integer",
+            "description": "Total raw contacts returned"
+          },
+          "source_breakdown": {
+            "type": "object",
+            "description": "Count of prospects per source",
+            "additionalProperties": {"type": "integer"}
+          },
+          "query_params_used": {
+            "type": "object",
+            "description": "ICP parameters applied to each source query"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Any warnings or flags (e.g., source unavailable, capped results, zero results)"
+          }
+        },
+        "required": ["raw_prospects", "accounts_found", "contacts_found", "source_breakdown", "query_params_used"]
+      }
+    }
+  ],
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "raw_prospects": {
+        "type": "array",
+        "items": {"type": "object"}
+      },
+      "accounts_found": {"type": "integer"},
+      "contacts_found": {"type": "integer"},
+      "source_breakdown": {"type": "object"},
+      "query_params_used": {"type": "object"},
+      "notes": {"type": "string"}
+    }
+  },
+  "example_input": {
+    "campaign_id": "camp-001",
+    "icp_definition": {
+      "positive": {
+        "industries": ["Automotive"],
+        "sub_segments": ["EV component suppliers", "Automotive OEMs"],
+        "company_size": {"min_employees": 500},
+        "regions": ["India"],
+        "seniority_levels": ["Director", "VP", "C-suite"],
+        "decision_maker_functions": ["Operations", "Supply Chain"],
+        "buying_signals": ["EV adoption", "Supply chain transformation"]
+      },
+      "negative": {
+        "excluded_company_types": ["Freelancers"],
+        "excluded_industries": [],
+        "excluded_regions": [],
+        "excluded_company_sizes": []
+      }
+    },
+    "persona_map": [
+      {"persona": "CXO", "persona_type": "primary"},
+      {"persona": "Operations", "persona_type": "secondary"}
+    ],
+    "approved_sources": ["Apollo", "Clay"],
+    "max_prospects": 500,
+    "notes": "Focus on EV ecosystem"
+  },
+  "example_output": {
+    "raw_prospects": [
+      {
+        "source": "Apollo",
+        "first_name": "Rajesh",
+        "last_name": "Kumar",
+        "email": "rajesh.kumar@automotive-oem.co.in",
+        "phone": "+91-9876543210",
+        "designation": "VP Operations",
+        "company_name": "India Automotive OEM Ltd",
+        "company_id": "comp-001",
+        "company_size": "5000",
+        "industry": "Automotive",
+        "region": "India",
+        "raw_source_data": {}
+      }
+    ],
+    "accounts_found": 45,
+    "contacts_found": 127,
+    "source_breakdown": {
+      "Apollo": 89,
+      "Clay": 38
+    },
+    "query_params_used": {
+      "industries": ["Automotive"],
+      "company_size_min": 500,
+      "regions": ["India"],
+      "seniority_levels": ["Director", "VP", "C-suite"]
+    },
+    "notes": "All sources queried successfully. Results below max_prospects threshold."
+  }
+}
