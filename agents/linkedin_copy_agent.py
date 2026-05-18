@@ -234,15 +234,40 @@ def generate_linkedin_series(
         sender_name=sender_name,
     )
 
-    # Build high-quality DM series with specific CTAs
-    pain_point_hook = pain_points[0] if pain_points else primary_angle
+    # Build compelling, insight-driven DM series with real industry hooks
+    # Note: Assumes Message Strategy Agent has provided rich, specific pain_points and primary_angle
+
+    pain_point_primary = pain_points[0] if pain_points else primary_angle
+    pain_point_secondary = pain_points[1] if len(pain_points) > 1 else None
+    pain_point_tertiary = pain_points[2] if len(pain_points) > 2 else None
     prospect_ref = prospect_name if prospect_name else "there"
+    company_ref = company_name if company_name else "your organization"
 
-    m1_msg = f"Hi {prospect_ref}.\n\n{pain_point_hook}\n\nWe researched this across {target_region} {campaign_type.lower()} buyers. {pain_points[1] if len(pain_points) > 1 else 'Seeing patterns in how {persona} teams solve this.'}\n\nWould you be open to 30-minute call? We walk through what we found, you tell us if it maps to how {company_name or 'your company'} is thinking about it."
+    # M1 (80-120 words): Strong hook into SPECIFIC pain + research signal + high-value CTA
+    secondary_hook = pain_point_secondary if pain_point_secondary else "Key pattern emerging across the market."
+    m1_msg = f"""Hi {prospect_ref}.
 
-    m2_msg = f"Sample from our {campaign_type.lower()} research on {primary_angle}. Key finding: {pain_points[1] if len(pain_points) > 1 else 'proven approaches in your space'}.\n\nWorth a quick look. Feel free to reach out if you want to dig into specific sections."
+Came across your work at {company_ref}. The way you're navigating {primary_angle.lower()} caught my attention.
 
-    m3_msg = f"Either way, let's connect once. We're seeing {pain_point_hook} intensify heading into {target_region}'s planning cycle. Worth hour exploring how you're thinking about this heading into next quarter?"
+We've been deep in the {target_region} market on this exact challenge. Most leaders we speak with are grappling with {pain_point_primary}. {secondary_hook}
+
+We wrapped research that shows real patterns in how top performers are solving this. Would you be open to 30-minute call? We walk you through what we found, you tell us whether it maps to what {company_ref} is thinking about heading into next cycle."""
+
+    # M2 (60-80 words): Proof point + notable pattern + soft no-pressure ask
+    secondary_finding = pain_point_secondary if pain_point_secondary else "proven approaches across peer organizations"
+    m2_msg = f"""Attaching research sample on {primary_angle}. The notable finding: {secondary_finding}.
+
+Every leader we interviewed flagged {pain_point_primary} as their top constraint right now. Thought the breakdown might be valuable for your team.
+
+Worth a read when you get time. Reach out if you want to dig into findings or methodology."""
+
+    # M3 (80-100 words): Either way opener + peer insight + specific fallback CTA
+    tertiary_focus = pain_point_secondary if pain_point_secondary else "solving this challenge"
+    m3_msg = f"""Either way, let's connect once. We're seeing {pain_point_primary} become the defining challenge this cycle for {target_region} leaders.
+
+The ones ahead on this are thinking about it differently than they were last year. Their approach to {tertiary_focus} is worth exploring together.
+
+Would be worth an hour to walk through what we're seeing at peer organizations and how it might map to where {company_ref} sits. Flexible on timing."""
 
     return {
         "hook_statement": primary_angle,
