@@ -37,15 +37,13 @@ def load_agent_config(agent_id: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def call_claude_cli(prompt: str) -> str:
+def call_claude_cli(prompt: str, model: str = "haiku") -> str:
     """
-    Call Claude via CLI using subprocess.
-
-    Requires: claude CLI installed and configured.
-    Note: Model switching requires API layer (CLI doesn't support -m flag).
+    Call Claude via CLI with model switching support.
 
     Args:
         prompt: The prompt to send to Claude
+        model: Model alias (haiku, sonnet, opus) or full name (claude-sonnet-4-6)
 
     Returns:
         Claude's response as string
@@ -53,7 +51,7 @@ def call_claude_cli(prompt: str) -> str:
     try:
         claude_path = r"C:\Users\Vansh\AppData\Roaming\npm\claude.cmd"
         result = subprocess.run(
-            [claude_path, "-p", prompt],
+            [claude_path, "-p", prompt, "--model", model],
             capture_output=True,
             text=True,
             timeout=120,
@@ -285,7 +283,8 @@ RESPONSE FORMAT:
 }}"""
 
     try:
-        claude_response = call_claude_cli(prompt)
+        # Use Haiku for fast strategy analysis
+        claude_response = call_claude_cli(prompt, model="haiku")
         strategy = parse_claude_strategy(claude_response)
         return strategy
 

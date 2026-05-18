@@ -22,14 +22,14 @@ from typing import Dict, List, Any, Optional
 from agents.schemas import LinkedInDMSeries, LinkedInCopyOutput
 
 
-def call_claude_cli(prompt: str) -> str:
-    """Call Claude via CLI using subprocess.
+def call_claude_cli(prompt: str, model: str = "sonnet") -> str:
+    """Call Claude via CLI with model switching support.
 
-    Uses hardcoded path and -p flag (matching working production pattern).
-    Timeout: 60 seconds.
+    LinkedIn Copy Agent uses Sonnet for high-quality message generation.
 
     Args:
         prompt: The prompt to send to Claude
+        model: Model alias (haiku, sonnet, opus) or full name
 
     Returns:
         Claude's response as string
@@ -37,10 +37,10 @@ def call_claude_cli(prompt: str) -> str:
     try:
         claude_path = r"C:\Users\Vansh\AppData\Roaming\npm\claude.cmd"
         result = subprocess.run(
-            [claude_path, "-p", prompt],
+            [claude_path, "-p", prompt, "--model", model],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
         )
 
         if result.returncode != 0:
@@ -53,7 +53,7 @@ def call_claude_cli(prompt: str) -> str:
             "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude"
         )
     except subprocess.TimeoutExpired:
-        raise RuntimeError("Claude CLI call timed out after 60 seconds")
+        raise RuntimeError("Claude CLI call timed out after 120 seconds")
 
 
 def build_linkedin_prompt(
