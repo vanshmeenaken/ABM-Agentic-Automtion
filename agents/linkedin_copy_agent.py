@@ -243,53 +243,34 @@ def generate_linkedin_series(
     prospect_ref = prospect_name if prospect_name else "there"
     company_ref = company_name if company_name else "your organization"
 
-    # M1: Specific insight + concrete challenge + CLEAR, BOLD CTA
-    # Structure: Hook → Specific insight (using pain points) → Bridge → [STANDALONE CTA]
-    insight_angle = f"{pain_point_primary}. {pain_point_secondary if pain_point_secondary else 'And most are solving it wrong.'}"
-
+    # M1: Holistic opening + sharp insight + C-level CTA (authoritative, natural)
     m1_msg = f"""Hi {prospect_ref}.
 
-Came across your work at {company_ref} — impressed by how you're thinking about {primary_angle.lower()}.
+Came across your profile. Quick note on something we're seeing.
 
-Here's what we're seeing with {target_region} leaders navigating this space: {insight_angle}
+We just finished research across {target_region} on {primary_angle.lower()}. Two things stood out. First: {pain_point_primary}. Second: most teams aren't solving for this. They're missing {pain_point_secondary if pain_point_secondary else 'the part that actually matters'}.
 
-The ones moving fastest are doing something different. They're not solving for just the obvious constraint — they're accounting for {pain_point_tertiary if pain_point_tertiary else 'the ripple effects most miss'}.
+The teams ahead of the curve? They're doing it differently. {pain_point_tertiary if pain_point_tertiary else 'They account for what everyone else overlooks'}. That's the gap.
 
-We wrapped research showing what separates them. Thought it'd be worth exploring together.
+Let's talk. 30 minutes. I'll walk you through what we found. You tell me how it lands for {company_ref}.
 
----
+Pick a time and send it over."""
 
-OPEN TO A 30-MINUTE CALL?
+    # M2: Research proof + specific finding + soft ask (no CTA pressure)
+    m2_msg = f"""Sample from the research attached.
 
-We walk you through exactly what we found on {pain_point_primary}. You tell us whether the approach maps to what {company_ref} is planning for next cycle.
+The finding: {pain_point_secondary if pain_point_secondary else 'most leaders hit the same wall here'}. Look at how the top performers are different. They're not doing anything complicated. Just thinking about it differently.
 
-Reply here or calendar link in DM."""
+Worth a read. Hit me back if you want to dig into the breakdown."""
 
-    # M2: Specific research finding + research proof + soft ask (no hard CTA)
-    specific_finding = f"{pain_point_secondary if pain_point_secondary else 'the core constraint leaders face'}"
+    # M3: Either way opener + peer insight + fallback CTA (authoritative)
+    m3_msg = f"""Either way, let's connect.
 
-    m2_msg = f"""Research sample attached. Focus: {specific_finding}.
+We're seeing {pain_point_primary} become the deciding factor this cycle. The leaders winning aren't just managing it. They've shifted how they approach {pain_point_secondary if pain_point_secondary else 'the whole thing'}. That's what matters.
 
-What stood out: 9 out of 10 leaders flagged {pain_point_primary} as their #1 blocker right now. But almost none are accounting for {pain_point_tertiary if pain_point_tertiary else 'the second-order effects'}.
+Let's talk it through. An hour is all I need to walk you through what we're seeing and how it applies to {company_ref}.
 
-That's where the gap is. Breakdown attached.
-
-Worth a read when you get time."""
-
-    # M3: Either way + peer insight + specific fallback CTA
-    m3_msg = f"""Either way, let's connect once.
-
-We're seeing {pain_point_primary} reshape how {target_region} leaders approach this cycle. The ones ahead aren't just managing the constraint — they're flipping how they think about {pain_point_secondary if pain_point_secondary else 'the whole approach'}.
-
-That shift is worth an hour of your time.
-
----
-
-WORTH AN HOUR TO EXPLORE THIS?
-
-We walk through what we're seeing at peer organizations. You tell us how it applies to {company_ref} heading into next quarter.
-
-Calendar link here, or suggest a time that works."""
+Send over your calendar."""
 
     return {
         "hook_statement": primary_angle,
