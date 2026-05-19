@@ -149,164 +149,234 @@ class MessageStrategyResponseSerializer(serializers.Serializer):
 
 # ============ Email Copy Agent ============
 
+class EmailDMSerializer(serializers.Serializer):
+    """Email message (M1/M2/M3)."""
+    message = serializers.CharField()
+    word_count = serializers.IntegerField()
+    send_day = serializers.CharField()
+    follow_ups = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
+
+
+class EmailDMSeriesSerializer(serializers.Serializer):
+    """Email M1-M3 series."""
+    M1 = EmailDMSerializer()
+    M2 = EmailDMSerializer()
+    M3 = EmailDMSerializer()
+    hook_statement = serializers.CharField()
+    cta_type = serializers.CharField()
+
+
 class EmailCopyRequestSerializer(serializers.Serializer):
     """Input schema for Email Copy Agent."""
 
-    strategy_brief = serializers.JSONField(
-        help_text="Output from Message Strategy Agent"
+    campaign_name = serializers.CharField(
+        max_length=200,
+        help_text="Campaign name"
     )
-    persona_tag = serializers.ChoiceField(
-        choices=["cxo_strategy", "marketing", "operations", "product_rd", "investor", "procurement"],
-        help_text="Target persona"
+    campaign_type = serializers.ChoiceField(
+        choices=["Survey", "POV", "Benchmarking", "Competition Benchmarking", "Market Research", "Expert Network", "Consulting", "Report Sales"],
+        help_text="Campaign type"
+    )
+    persona_strategies = serializers.JSONField(
+        help_text="Persona strategies with pain_points, primary_angle, value_prop"
+    )
+    messaging_strategy = serializers.JSONField(
+        help_text="Message strategy from Message Strategy Agent"
+    )
+    channel_guidance = serializers.JSONField(
+        help_text="Channel guidance dict"
+    )
+    target_personas = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Target personas (e.g., ['cxo_strategy', 'operations'])"
+    )
+    target_region = serializers.CharField(
+        max_length=100,
+        required=False,
+        help_text="Target region (default: Global)"
+    )
+    target_industry = serializers.CharField(
+        max_length=100,
+        help_text="Target industry"
     )
     prospect_name = serializers.CharField(
         max_length=100,
-        help_text="Prospect name (e.g., 'John Doe')"
+        required=False,
+        help_text="Prospect name"
     )
     company_name = serializers.CharField(
         max_length=200,
-        help_text="Company name"
-    )
-    offer = serializers.CharField(
-        max_length=500,
-        help_text="Campaign offer"
-    )
-    stage = serializers.ChoiceField(
-        choices=["M1", "M2", "M3", "M4"],
-        help_text="Email stage in sequence"
-    )
-    sender_name = serializers.CharField(
-        max_length=100,
-        help_text="Name of email sender"
-    )
-    prior_email_subjects = serializers.ListField(
-        child=serializers.CharField(),
         required=False,
-        help_text="Previous subject lines (to avoid repetition)"
+        help_text="Company name"
     )
 
 
 class EmailCopyResponseSerializer(serializers.Serializer):
     """Output schema for Email Copy Agent."""
 
-    subject = serializers.CharField(
-        help_text="Email subject line (< 60 chars)"
+    campaign_name = serializers.CharField()
+    campaign_type = serializers.CharField()
+    email_series = serializers.DictField(
+        child=EmailDMSeriesSerializer(),
+        help_text="Per-persona email M1-M3 series"
     )
-    body = serializers.CharField(
-        help_text="Email body in plain text"
-    )
-    word_count = serializers.IntegerField(
-        help_text="Word count of body"
-    )
-    stage = serializers.CharField(help_text="M1, M2, M3, or M4")
-    cta = serializers.CharField(help_text="Specific call to action")
+    notes = serializers.CharField()
 
 
 # ============ WhatsApp Copy Agent ============
 
+class WhatsAppDMSerializer(serializers.Serializer):
+    """WhatsApp message (M1/M2/M3)."""
+    message = serializers.CharField()
+    word_count = serializers.IntegerField()
+    send_day = serializers.CharField()
+    follow_ups = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
+
+
+class WhatsAppDMSeriesSerializer(serializers.Serializer):
+    """WhatsApp M1-M3 series."""
+    M1 = WhatsAppDMSerializer()
+    M2 = WhatsAppDMSerializer()
+    M3 = WhatsAppDMSerializer()
+    hook_statement = serializers.CharField()
+    cta_type = serializers.CharField()
+
+
 class WhatsAppCopyRequestSerializer(serializers.Serializer):
     """Input schema for WhatsApp Copy Agent."""
 
-    strategy_brief = serializers.JSONField(
-        help_text="Output from Message Strategy Agent"
+    campaign_name = serializers.CharField(
+        max_length=200,
+        help_text="Campaign name"
     )
-    persona_tag = serializers.ChoiceField(
-        choices=["cxo_strategy", "marketing", "operations", "product_rd", "investor", "procurement"],
-        help_text="Target persona"
+    campaign_type = serializers.ChoiceField(
+        choices=["Survey", "POV", "Benchmarking", "Competition Benchmarking", "Market Research", "Expert Network", "Consulting", "Report Sales"],
+        help_text="Campaign type"
+    )
+    persona_strategies = serializers.JSONField(
+        help_text="Persona strategies with pain_points, primary_angle, value_prop"
+    )
+    messaging_strategy = serializers.JSONField(
+        help_text="Message strategy from Message Strategy Agent"
+    )
+    channel_guidance = serializers.JSONField(
+        help_text="Channel guidance dict"
+    )
+    target_personas = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Target personas"
+    )
+    target_region = serializers.CharField(
+        max_length=100,
+        required=False,
+        help_text="Target region (default: Global)"
+    )
+    target_industry = serializers.CharField(
+        max_length=100,
+        help_text="Target industry"
     )
     prospect_name = serializers.CharField(
         max_length=100,
+        required=False,
         help_text="Prospect name"
     )
     company_name = serializers.CharField(
         max_length=200,
+        required=False,
         help_text="Company name"
-    )
-    offer = serializers.CharField(
-        max_length=500,
-        help_text="Campaign offer"
-    )
-    stage = serializers.ChoiceField(
-        choices=["M1", "M2", "M3", "M4"],
-        help_text="Message stage"
-    )
-    sender_name = serializers.CharField(
-        max_length=100,
-        help_text="Sender name"
     )
 
 
 class WhatsAppCopyResponseSerializer(serializers.Serializer):
     """Output schema for WhatsApp Copy Agent."""
 
-    body = serializers.CharField(
-        help_text="WhatsApp message body (max 300 words)"
+    campaign_name = serializers.CharField()
+    campaign_type = serializers.CharField()
+    whatsapp_series = serializers.DictField(
+        child=WhatsAppDMSeriesSerializer(),
+        help_text="Per-persona WhatsApp M1-M3 series"
     )
-    word_count = serializers.IntegerField(
-        help_text="Word count"
-    )
-    stage = serializers.CharField(help_text="M1, M2, M3, or M4")
-    opt_out_line = serializers.CharField(
-        help_text="Opt-out statement (e.g., 'Reply STOP to opt out')"
-    )
-    cta = serializers.CharField(help_text="Call to action")
+    channel_guidance = serializers.CharField()
+    notes = serializers.CharField()
 
 
 # ============ LinkedIn Copy Agent ============
 
+class LinkedInDMSerializer(serializers.Serializer):
+    """LinkedIn DM message (M1/M2/M3)."""
+    message = serializers.CharField()
+    word_count = serializers.IntegerField()
+    send_day = serializers.CharField()
+
+
+class LinkedInDMSeriesSerializer(serializers.Serializer):
+    """LinkedIn M1-M3 DM series."""
+    M1 = LinkedInDMSerializer()
+    M2 = LinkedInDMSerializer()
+    M3 = LinkedInDMSerializer()
+    hook_statement = serializers.CharField()
+    cta_type = serializers.CharField()
+
+
 class LinkedInCopyRequestSerializer(serializers.Serializer):
     """Input schema for LinkedIn Copy Agent."""
 
-    strategy_brief = serializers.JSONField(
-        help_text="Output from Message Strategy Agent"
+    campaign_name = serializers.CharField(
+        max_length=200,
+        help_text="Campaign name"
     )
-    persona_tag = serializers.ChoiceField(
-        choices=["cxo_strategy", "marketing", "operations", "product_rd", "investor", "procurement"],
-        help_text="Target persona"
+    campaign_type = serializers.ChoiceField(
+        choices=["Survey", "POV", "Benchmarking", "Competition Benchmarking", "Market Research", "Expert Network", "Consulting", "Report Sales"],
+        help_text="Campaign type"
+    )
+    persona_strategies = serializers.JSONField(
+        help_text="Persona strategies with pain_points, primary_angle, value_prop"
+    )
+    messaging_strategy = serializers.JSONField(
+        help_text="Message strategy from Message Strategy Agent"
+    )
+    channel_guidance = serializers.JSONField(
+        help_text="Channel guidance dict"
+    )
+    target_personas = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Target personas"
+    )
+    target_region = serializers.CharField(
+        max_length=100,
+        required=False,
+        help_text="Target region (default: Global)"
+    )
+    target_industry = serializers.CharField(
+        max_length=100,
+        help_text="Target industry"
     )
     prospect_name = serializers.CharField(
         max_length=100,
+        required=False,
         help_text="Prospect name"
     )
     company_name = serializers.CharField(
         max_length=200,
+        required=False,
         help_text="Company name"
     )
-    offer = serializers.CharField(
-        max_length=500,
-        help_text="Campaign offer"
-    )
-    sender_name = serializers.CharField(
-        max_length=100,
-        help_text="Sender name"
-    )
-
-
-class LinkedInConnectionRequestSerializer(serializers.Serializer):
-    """LinkedIn connection request output."""
-
-    connection_request_note = serializers.CharField(
-        max_length=300,
-        help_text="Connection request note (max 300 chars)"
-    )
-    character_count = serializers.IntegerField(help_text="Character count")
-
-
-class LinkedInFollowUpMessageSerializer(serializers.Serializer):
-    """LinkedIn follow-up message output (post-connection)."""
-
-    follow_up_message = serializers.CharField(
-        help_text="Follow-up message (max 300 words)"
-    )
-    word_count = serializers.IntegerField(help_text="Word count")
-    optimal_delay_hours = serializers.IntegerField(
-        help_text="Recommended hours to wait before sending"
-    )
-    cta = serializers.CharField(help_text="Call to action")
 
 
 class LinkedInCopyResponseSerializer(serializers.Serializer):
     """Output schema for LinkedIn Copy Agent."""
 
-    connection_request = LinkedInConnectionRequestSerializer()
-    follow_up_message = LinkedInFollowUpMessageSerializer()
+    campaign_name = serializers.CharField()
+    campaign_type = serializers.CharField()
+    linkedin_series = serializers.DictField(
+        child=LinkedInDMSeriesSerializer(),
+        help_text="Per-persona LinkedIn M1-M3 DM series"
+    )
+    channel_guidance = serializers.CharField()
+    notes = serializers.CharField()

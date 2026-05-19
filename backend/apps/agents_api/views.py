@@ -176,18 +176,20 @@ class EmailCopyViewSet(viewsets.ViewSet):
     """
     API Endpoint: POST /api/v1/agents/email-copy/
 
-    Generates M1-M4 email copy for prospect based on strategy.
+    Generates M1-M3 email copy series from messaging strategy.
 
     Example request:
     {
-        "strategy_brief": {...},
-        "persona_tag": "cxo_strategy",
-        "prospect_name": "John Doe",
-        "company_name": "Acme Corp",
-        "offer": "EdTech research",
-        "stage": "M1",
-        "sender_name": "Your Name",
-        "prior_email_subjects": []
+        "campaign_name": "Survey: Crop Protection India",
+        "campaign_type": "Survey",
+        "persona_strategies": {...},
+        "messaging_strategy": {...},
+        "channel_guidance": {...},
+        "target_personas": ["cxo_strategy"],
+        "target_industry": "Crop Protection Pesticides",
+        "target_region": "India",
+        "prospect_name": "Rajesh Kumar",
+        "company_name": "Syngenta India"
     }
     """
 
@@ -195,27 +197,34 @@ class EmailCopyViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
-        """Generate email copy."""
+        """Generate email M1-M3 series."""
         serializer = EmailCopyRequestSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            from email_copy_agent import generate_email_sequence
+            from email_copy_agent import run_email_copy_agent
 
-            result = generate_email_sequence(
-                strategy_brief=serializer.validated_data.get("strategy_brief"),
-                persona_tag=serializer.validated_data.get("persona_tag"),
-                prospect_name=serializer.validated_data.get("prospect_name"),
-                company_name=serializer.validated_data.get("company_name"),
-                offer=serializer.validated_data.get("offer"),
-                stage=serializer.validated_data.get("stage"),
-                sender_name=serializer.validated_data.get("sender_name"),
-                prior_email_subjects=serializer.validated_data.get("prior_email_subjects", []),
+            result = run_email_copy_agent(
+                campaign_name=serializer.validated_data.get("campaign_name"),
+                campaign_type=serializer.validated_data.get("campaign_type"),
+                persona_strategies=serializer.validated_data.get("persona_strategies"),
+                messaging_strategy=serializer.validated_data.get("messaging_strategy"),
+                channel_guidance=serializer.validated_data.get("channel_guidance"),
+                target_personas=serializer.validated_data.get("target_personas"),
+                target_region=serializer.validated_data.get("target_region", "Global"),
+                target_industry=serializer.validated_data.get("target_industry"),
+                prospect_name=serializer.validated_data.get("prospect_name", ""),
+                company_name=serializer.validated_data.get("company_name", ""),
             )
 
-            response_serializer = EmailCopyResponseSerializer(data=result)
+            response_serializer = EmailCopyResponseSerializer(data={
+                "campaign_name": result.campaign_name,
+                "campaign_type": result.campaign_type,
+                "email_series": {k: v.dict() for k, v in result.email_series.items()},
+                "notes": result.notes
+            })
             if response_serializer.is_valid():
                 return Response(response_serializer.data, status=status.HTTP_200_OK)
             else:
@@ -237,14 +246,11 @@ class EmailCopyViewSet(viewsets.ViewSet):
         return Response({
             "endpoint": "/api/v1/agents/email-copy/generate/",
             "method": "POST",
-            "description": "Generate email M1-M4 copy",
-            "stages": ["M1 (cold first touch)", "M2 (follow-up)", "M3 (social proof)", "M4 (final low pressure)"],
-            "constraints": [
-                "Subject < 60 chars",
-                "No spam trigger words",
-                "Plain text only",
-                "Must pass Compliance Review"
-            ]
+            "description": "Generate email M1-M3 series from messaging strategy",
+            "input_source": "Message Strategy Agent output",
+            "output": "M1-M3 email series with hook, follow-ups, CTA",
+            "cadence": ["Day 1", "Day 3-4", "Day 7-10"],
+            "features": ["2 M1 variants (FOMO/Scarcity)", "Threading support (Re:)", "Mobile-optimized"]
         })
 
 
@@ -252,17 +258,20 @@ class WhatsAppCopyViewSet(viewsets.ViewSet):
     """
     API Endpoint: POST /api/v1/agents/whatsapp-copy/
 
-    Generates M1-M4 WhatsApp copy (mobile-first, conversational).
+    Generates M1-M3 WhatsApp copy series (mobile-first, conversational).
 
     Example request:
     {
-        "strategy_brief": {...},
-        "persona_tag": "operations",
-        "prospect_name": "Jane Doe",
-        "company_name": "XYZ Corp",
-        "offer": "Logistics research",
-        "stage": "M1",
-        "sender_name": "Your Name"
+        "campaign_name": "Survey: Crop Protection India",
+        "campaign_type": "Survey",
+        "persona_strategies": {...},
+        "messaging_strategy": {...},
+        "channel_guidance": {...},
+        "target_personas": ["cxo_strategy"],
+        "target_industry": "Crop Protection Pesticides",
+        "target_region": "India",
+        "prospect_name": "Rajesh Kumar",
+        "company_name": "Syngenta India"
     }
     """
 
@@ -270,26 +279,35 @@ class WhatsAppCopyViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
-        """Generate WhatsApp copy."""
+        """Generate WhatsApp M1-M3 series."""
         serializer = WhatsAppCopyRequestSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            from whatsapp_copy_agent import generate_whatsapp_sequence
+            from whatsapp_copy_agent import run_whatsapp_copy_agent
 
-            result = generate_whatsapp_sequence(
-                strategy_brief=serializer.validated_data.get("strategy_brief"),
-                persona_tag=serializer.validated_data.get("persona_tag"),
-                prospect_name=serializer.validated_data.get("prospect_name"),
-                company_name=serializer.validated_data.get("company_name"),
-                offer=serializer.validated_data.get("offer"),
-                stage=serializer.validated_data.get("stage"),
-                sender_name=serializer.validated_data.get("sender_name"),
+            result = run_whatsapp_copy_agent(
+                campaign_name=serializer.validated_data.get("campaign_name"),
+                campaign_type=serializer.validated_data.get("campaign_type"),
+                persona_strategies=serializer.validated_data.get("persona_strategies"),
+                messaging_strategy=serializer.validated_data.get("messaging_strategy"),
+                channel_guidance=serializer.validated_data.get("channel_guidance"),
+                target_personas=serializer.validated_data.get("target_personas"),
+                target_region=serializer.validated_data.get("target_region", "Global"),
+                target_industry=serializer.validated_data.get("target_industry"),
+                prospect_name=serializer.validated_data.get("prospect_name", ""),
+                company_name=serializer.validated_data.get("company_name", ""),
             )
 
-            response_serializer = WhatsAppCopyResponseSerializer(data=result)
+            response_serializer = WhatsAppCopyResponseSerializer(data={
+                "campaign_name": result.campaign_name,
+                "campaign_type": result.campaign_type,
+                "whatsapp_series": {k: v.dict() for k, v in result.whatsapp_series.items()},
+                "channel_guidance": result.channel_guidance,
+                "notes": result.notes
+            })
             if response_serializer.is_valid():
                 return Response(response_serializer.data, status=status.HTTP_200_OK)
             else:
@@ -311,13 +329,11 @@ class WhatsAppCopyViewSet(viewsets.ViewSet):
         return Response({
             "endpoint": "/api/v1/agents/whatsapp-copy/generate/",
             "method": "POST",
-            "description": "Generate WhatsApp M1-M4 copy",
-            "constraints": [
-                "Max 120-70 words per stage (decreasing)",
-                "Conversational tone",
-                "MUST include opt-out line",
-                "No media instructions in copy"
-            ]
+            "description": "Generate WhatsApp M1-M3 series from messaging strategy",
+            "input_source": "Message Strategy Agent output",
+            "output": "M1-M3 WhatsApp series with follow-ups",
+            "cadence": ["Day 1", "Day 2-3", "Day 5-7"],
+            "features": ["Conversational tone", "25-40 words per bubble", "M1+M2 follow-ups", "2 M1 variants"]
         })
 
 
@@ -325,16 +341,20 @@ class LinkedInCopyViewSet(viewsets.ViewSet):
     """
     API Endpoint: POST /api/v1/agents/linkedin-copy/
 
-    Generates LinkedIn connection request + follow-up DM copy.
+    Generates LinkedIn M1-M3 DM copy series (post-connection only).
 
     Example request:
     {
-        "strategy_brief": {...},
-        "persona_tag": "cxo_strategy",
-        "prospect_name": "Alice Smith",
-        "company_name": "Tech Corp",
-        "offer": "Executive insights",
-        "sender_name": "Your Name"
+        "campaign_name": "Survey: Crop Protection India",
+        "campaign_type": "Survey",
+        "persona_strategies": {...},
+        "messaging_strategy": {...},
+        "channel_guidance": {...},
+        "target_personas": ["cxo_strategy"],
+        "target_industry": "Crop Protection Pesticides",
+        "target_region": "India",
+        "prospect_name": "Rajesh Kumar",
+        "company_name": "Syngenta India"
     }
     """
 
@@ -342,25 +362,35 @@ class LinkedInCopyViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
-        """Generate LinkedIn copy (connection + DM)."""
+        """Generate LinkedIn M1-M3 DM series."""
         serializer = LinkedInCopyRequestSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            from linkedin_copy_agent import generate_linkedin_series
+            from linkedin_copy_agent import run_linkedin_copy_agent
 
-            result = generate_linkedin_series(
-                strategy_brief=serializer.validated_data.get("strategy_brief"),
-                persona_tag=serializer.validated_data.get("persona_tag"),
-                prospect_name=serializer.validated_data.get("prospect_name"),
-                company_name=serializer.validated_data.get("company_name"),
-                offer=serializer.validated_data.get("offer"),
-                sender_name=serializer.validated_data.get("sender_name"),
+            result = run_linkedin_copy_agent(
+                campaign_name=serializer.validated_data.get("campaign_name"),
+                campaign_type=serializer.validated_data.get("campaign_type"),
+                persona_strategies=serializer.validated_data.get("persona_strategies"),
+                messaging_strategy=serializer.validated_data.get("messaging_strategy"),
+                channel_guidance=serializer.validated_data.get("channel_guidance"),
+                target_personas=serializer.validated_data.get("target_personas"),
+                target_region=serializer.validated_data.get("target_region", "Global"),
+                target_industry=serializer.validated_data.get("target_industry"),
+                prospect_name=serializer.validated_data.get("prospect_name", ""),
+                company_name=serializer.validated_data.get("company_name", ""),
             )
 
-            response_serializer = LinkedInCopyResponseSerializer(data=result)
+            response_serializer = LinkedInCopyResponseSerializer(data={
+                "campaign_name": result.campaign_name,
+                "campaign_type": result.campaign_type,
+                "linkedin_series": {k: v.dict() for k, v in result.linkedin_series.items()},
+                "channel_guidance": result.channel_guidance,
+                "notes": result.notes
+            })
             if response_serializer.is_valid():
                 return Response(response_serializer.data, status=status.HTTP_200_OK)
             else:
@@ -382,10 +412,9 @@ class LinkedInCopyViewSet(viewsets.ViewSet):
         return Response({
             "endpoint": "/api/v1/agents/linkedin-copy/generate/",
             "method": "POST",
-            "description": "Generate LinkedIn connection request + follow-up DM",
-            "output_parts": [
-                "connection_request_note (max 300 chars)",
-                "follow_up_message (max 300 words, send 48h+ after connection)"
-            ],
-            "note": "Platform does not send via LinkedIn. Copy is for LinkedHelper setup."
+            "description": "Generate LinkedIn M1-M3 DM series (post-connection)",
+            "input_source": "Message Strategy Agent output",
+            "output": "M1-M3 LinkedIn DM series",
+            "cadence": ["Day 1", "Day 3-4", "Day 7-10"],
+            "features": ["Peer-to-peer tone", "No connection request note", "2 M1 variants", "Either way M3 close"]
         })
