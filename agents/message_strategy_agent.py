@@ -223,38 +223,88 @@ def generate_strategy(
     Returns:
         Dict with messaging strategy, persona strategies, channel guidance
     """
-    # Define market-specific pain points per industry/persona/campaign type
+    # Define market-specific pain points per campaign_type + industry (C-Suite/Decision Maker focus only)
     pain_point_map = {
         "K-12 Education": {
-            "cxo_strategy": [
-                "Teacher turnover at 20-year high, creating curriculum continuity gaps",
-                "Board pressure to prove ROI on retention initiatives",
-                "Professional development budgets frozen or cut further"
+            "Survey": [
+                "Teacher turnover at 20-year high, creating curriculum continuity gaps and board liability",
+                "Board pressure to prove ROI on retention initiatives while budgets shrink",
+                "Strategic visibility gap on retention drivers: what actually keeps top talent vs assumptions"
             ],
-            "operations": [
-                "HR processes designed for stability, not retention in crisis periods",
-                "Limited visibility into which teachers are at flight risk",
-                "Mentoring and support programs fragmented across departments"
+            "POV": [
+                "Competitive threat from charter schools and private institutions eroding public school talent",
+                "Strategic uncertainty on whether current retention models survive next 18 months at current pace",
+                "Market positioning challenge: need evidence-based approach vs competitor strategic moves"
+            ]
+        },
+        "Crop Protection Pesticides": {
+            "Survey": [
+                "Dealer NPS declining as farm consolidation shifts power to bundled-solution agrochemical majors",
+                "Board-level margin compression threat from price wars and private label penetration across regions",
+                "Strategic blind spot: agronomist vs farmer preference gaps creating pricing and positioning risk"
+            ],
+            "POV": [
+                "Competitive threat: bundled-solution majors consolidating dealer relationships at accelerating pace",
+                "Market shift from dealer-led to agronomist-led recommendations eroding distribution model",
+                "Strategic repositioning required before consolidation window closes for competitive advantage"
+            ],
+            "Competition Benchmarking": [
+                "Competitor threat: top 3 agrochemical players now controlling 45%+ of premium dealer networks",
+                "Market consolidation accelerating: consolidation winners emerging while we maintain legacy model",
+                "Strategic intelligence gap on competitor positioning and how they're winning dealer relationships"
+            ]
+        },
+        "Third-Party Logistics (3PL)": {
+            "Survey": [
+                "Shipper expectations shifting to real-time visibility, eroding manual-handling margin opportunity",
+                "Strategic uncertainty on asset-light vs asset-heavy model viability with current customer mix",
+                "Board-level visibility gap: unclear shipper preference ranking (speed vs visibility vs cost vs reliability)"
+            ],
+            "POV": [
+                "Competitive threat from tech-enabled startups offering shipper visibility at lower total cost",
+                "Market shift toward outcome-based vs transactional pricing creating margin compression pressure",
+                "Strategic positioning question: clear competitive playbook missing for asset-light transition"
+            ],
+            "Competition Benchmarking": [
+                "Competitor threat: tech-first 3PLs scaling shipper relationships faster than traditional carriers",
+                "Market consolidation through mega-deals shifting landscape toward automation-first players",
+                "Strategic intelligence missing on competitor differentiation and why shippers are switching"
+            ]
+        },
+        "D2C E-commerce": {
+            "Survey": [
+                "CAC inflation 30-40% YoY while iOS privacy changes blind attribution to paid channels",
+                "Board-level unit economics crisis: paid channel ROI deteriorating, organic payback too long",
+                "Strategic visibility gap: what drives repeat purchase vs one-time buyer, unclear LTV drivers"
+            ],
+            "POV": [
+                "Competitive threat: private labels from Amazon and marketplaces eroding margin and differentiation",
+                "Strategic pivot required: paid channel ROI broken, must transition playbook to owned/earned channels",
+                "Market shift toward community and brand loyalty vs paid customer acquisition reshaping competitive advantage"
+            ],
+            "Competition Benchmarking": [
+                "Competitor threat: private label brands scaling faster on price and marketplace convenience",
+                "Market positioning unclear: don't know which competitors own 'sustainable' or 'premium' perception",
+                "Strategic intelligence gap on competitor CAC, LTV, and retention benchmarks vs our position"
             ]
         }
     }
 
-    # Get pain points for this industry/personas combo (with fallback)
+    # Get pain points for this campaign_type + industry (C-Suite/Decision Maker only, no personas)
     industry_pains = pain_point_map.get(target_industry, {})
+    campaign_pains = industry_pains.get(campaign_type, [
+        f"Market competitiveness in {target_industry}",
+        f"Strategic decision-making for {campaign_type.lower()}",
+        f"Competitive positioning and market intelligence"
+    ])
 
-    # Build persona-specific strategies
+    # Build single strategy for C-Suite/Decision Makers (no persona variants)
     persona_strategies = {}
     for persona in target_personas:
-        pains = industry_pains.get(persona, [
-            f"{persona.replace('_', ' ').title()} operational challenges",
-            f"Market competitiveness in {target_industry}",
-            f"Strategic decision-making for {campaign_type.lower()}"
-        ])
-
         persona_strategies[persona] = {
-            "primary_angle": f"{target_industry}: {campaign_type} insights for {persona.replace('_', ' ').title()}",
-            "pain_points": pains,
-            "value_prop": f"{offer} - addressing {pains[0][:40].lower()}..."
+            "primary_angle": f"{target_industry}: {campaign_type} insights for C-Suite and Decision Makers",
+            "pain_points": campaign_pains,
+            "value_prop": f"{offer} - addressing {campaign_pains[0][:40].lower()}..."
         }
 
     # Build strategy

@@ -409,6 +409,71 @@ class LinkedInCopyOutput(BaseModel):
     notes: str = Field(default="", description="Implementation notes")
 
 
+# Email Copy Agent schemas (M1-M3 series)
+class EmailDM(BaseModel):
+    """Single email in M1-M3 series."""
+
+    subject: str = Field(..., description="Email subject line")
+    preview_text: str = Field(..., description="Preview text (100 chars max)")
+    body: str = Field(..., description="Email body with formatting")
+    word_count: int = Field(..., description="Word count of body")
+    send_day: str = Field(..., description="When to send (Day 1, Day 3-4, Day 7-10)")
+
+
+class EmailDMSeries(BaseModel):
+    """Complete email M1-M3 series."""
+
+    M1: EmailDM = Field(..., description="First email (hook + offer)")
+    M2: EmailDM = Field(..., description="Second email (proof/sample)")
+    M3: EmailDM = Field(..., description="Third email (urgency/close)")
+    hook_statement: str = Field(..., description="Core insight/hook used")
+    cta_type: str = Field(..., description="CTA type: schedule_call, review_findings, compare_approach")
+
+
+class EmailCopyAgentOutput(BaseModel):
+    """Output from Email Copy Agent (M1-M3 series)."""
+
+    campaign_name: str = Field(..., description="Campaign name")
+    campaign_type: str = Field(..., description="Campaign type")
+    email_series: Dict[str, EmailDMSeries] = Field(
+        ..., description="Per-persona email M1-M3 series"
+    )
+    channel_guidance: str = Field(..., description="Email channel guidance")
+    notes: str = Field(default="", description="Implementation notes")
+
+
+# WhatsApp Copy Agent schemas (M1-M3 series)
+class WhatsAppDM(BaseModel):
+    """Single WhatsApp message in M1-M3 series."""
+
+    message: str = Field(..., description="WhatsApp message body (conversational tone)")
+    word_count: int = Field(..., description="Word count of message")
+    send_day: str = Field(..., description="When to send (Day 1, Day 2-3, Day 5-7)")
+    follow_ups: List[str] = Field(default_factory=list, description="Follow-up messages if no reply")
+
+
+class WhatsAppDMSeries(BaseModel):
+    """Complete WhatsApp M1-M3 series."""
+
+    M1: WhatsAppDM = Field(..., description="First message (hook + CTA)")
+    M2: WhatsAppDM = Field(..., description="Second message (proof/insight)")
+    M3: WhatsAppDM = Field(..., description="Third message (close)")
+    hook_statement: str = Field(..., description="Core insight/hook used")
+    cta_type: str = Field(..., description="CTA type: quick_call, review_findings, connect")
+
+
+class WhatsAppCopyAgentOutput(BaseModel):
+    """Output from WhatsApp Copy Agent (M1-M3 series)."""
+
+    campaign_name: str = Field(..., description="Campaign name")
+    campaign_type: str = Field(..., description="Campaign type")
+    whatsapp_series: Dict[str, WhatsAppDMSeries] = Field(
+        ..., description="Per-persona WhatsApp M1-M3 series"
+    )
+    channel_guidance: str = Field(..., description="WhatsApp channel guidance")
+    notes: str = Field(default="", description="Implementation notes")
+
+
 # Orchestrator schemas
 class OrchestrationInput(BaseModel):
     """Input to run full orchestration."""
