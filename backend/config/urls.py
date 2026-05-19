@@ -8,6 +8,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from apps.core.views import health_check
+from apps.core.telegram_webhook import telegram_callback_webhook
 
 urlpatterns = [
     # Admin
@@ -19,6 +20,9 @@ urlpatterns = [
     # Authentication (JWT)
     path("api/v1/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/v1/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # Webhooks
+    path("api/v1/webhooks/telegram/", telegram_callback_webhook, name="telegram_callback"),
 
     # API v1
     path("api/v1/", include("apps.agents_api.urls")),
