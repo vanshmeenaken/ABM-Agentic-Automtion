@@ -474,6 +474,49 @@ class WhatsAppCopyAgentOutput(BaseModel):
     notes: str = Field(default="", description="Implementation notes")
 
 
+# Compliance Review Agent schemas
+class ComplianceViolation(BaseModel):
+    """Single compliance violation found in message."""
+
+    rule: str = Field(
+        ...,
+        description="Rule violated (spam_trigger_word, regulatory_language, false_claim, specific_assertion, missing_opt_out, excessive_length, brand_risk_language)"
+    )
+    severity: str = Field(..., description="Severity level (block)")
+    detail: str = Field(..., description="Exact word/phrase or specific detail that triggered violation")
+    recommendation: str = Field(..., description="What to fix or change")
+
+
+class ComplianceCheckResult(BaseModel):
+    """Compliance check result for single message."""
+
+    stage: str = Field(..., description="Message stage (M1, M2, M3)")
+    status: str = Field(..., description="Status: pass or blocked")
+    violations: List[ComplianceViolation] = Field(default_factory=list, description="List of violations found")
+    word_count: int = Field(..., description="Word count of message")
+    can_be_approved: bool = Field(..., description="Can this message be approved? False if any violation")
+    recommendation: str = Field(..., description="Recommendation: ready_for_approval or must_regenerate")
+
+
+class ComplianceReviewAgentOutput(BaseModel):
+    """Output from Compliance Review Agent."""
+
+    campaign_name: str = Field(..., description="Campaign name")
+    campaign_type: str = Field(..., description="Campaign type")
+    channel: str = Field(..., description="Channel (email, whatsapp, linkedin)")
+    compliance_results: Dict[str, List[ComplianceCheckResult]] = Field(
+        ..., description="Per-persona compliance results (persona -> [M1_result, M2_result, M3_result])"
+    )
+    overall_status: str = Field(..., description="Overall status: all_pass, some_blocked, all_blocked")
+    telegram_approval_sent: bool = Field(
+        ..., description="Was Telegram approval request sent? (only if all_pass and trigger_telegram_approval=True)"
+    )
+    telegram_approval_id: str = Field(
+        default="", description="Telegram approval ID if approval request was sent"
+    )
+    notes: str = Field(default="", description="Additional notes or context")
+
+
 # Orchestrator schemas
 class OrchestrationInput(BaseModel):
     """Input to run full orchestration."""

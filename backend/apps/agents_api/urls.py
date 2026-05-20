@@ -9,6 +9,7 @@ from .views import (
     EmailCopyViewSet,
     WhatsAppCopyViewSet,
     LinkedInCopyViewSet,
+    ComplianceReviewViewSet,
 )
 
 router = DefaultRouter()
@@ -17,5 +18,6 @@ router.register(r"agents/message-strategy", MessageStrategyViewSet, basename="me
 router.register(r"agents/email-copy", EmailCopyViewSet, basename="email-copy")
 router.register(r"agents/whatsapp-copy", WhatsAppCopyViewSet, basename="whatsapp-copy")
 router.register(r"agents/linkedin-copy", LinkedInCopyViewSet, basename="linkedin-copy")
+router.register(r"agents/compliance-review", ComplianceReviewViewSet, basename="compliance-review")
 
 urlpatterns = router.urls

@@ -380,3 +380,82 @@ class LinkedInCopyResponseSerializer(serializers.Serializer):
     )
     channel_guidance = serializers.CharField()
     notes = serializers.CharField()
+
+
+# ============ Compliance Review Agent ============
+
+class ComplianceViolationSerializer(serializers.Serializer):
+    """Single compliance violation."""
+
+    rule = serializers.CharField(help_text="Rule violated")
+    severity = serializers.CharField(help_text="Severity level (block)")
+    detail = serializers.CharField(help_text="Specific detail that triggered violation")
+    recommendation = serializers.CharField(help_text="How to fix")
+
+
+class ComplianceCheckResultSerializer(serializers.Serializer):
+    """Compliance check result for single message."""
+
+    stage = serializers.CharField(help_text="Message stage (M1, M2, M3)")
+    status = serializers.CharField(help_text="Status: pass or blocked")
+    violations = ComplianceViolationSerializer(many=True, help_text="List of violations")
+    word_count = serializers.IntegerField(help_text="Word count of message")
+    can_be_approved = serializers.BooleanField(help_text="Can be approved?")
+    recommendation = serializers.CharField(help_text="ready_for_approval or must_regenerate")
+
+
+class ComplianceReviewRequestSerializer(serializers.Serializer):
+    """Input schema for Compliance Review Agent."""
+
+    campaign_name = serializers.CharField(
+        max_length=200,
+        help_text="Campaign name"
+    )
+    campaign_type = serializers.ChoiceField(
+        choices=["Survey", "POV", "Benchmarking", "Competition Benchmarking", "Market Research", "Expert Network", "Consulting", "Report Sales"],
+        help_text="Campaign type"
+    )
+    channel = serializers.ChoiceField(
+        choices=["email", "whatsapp", "linkedin"],
+        help_text="Channel"
+    )
+    messages = serializers.JSONField(
+        help_text="Messages dict: {persona: {M1: {message, word_count}, M2: {...}, M3: {...}}}"
+    )
+    prospect_name = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+        help_text="Prospect name"
+    )
+    company_name = serializers.CharField(
+        max_length=200,
+        required=False,
+        allow_blank=True,
+        help_text="Company name"
+    )
+    trigger_telegram_approval = serializers.BooleanField(
+        default=False,
+        help_text="Send to Telegram if all pass?"
+    )
+    telegram_user_id = serializers.IntegerField(
+        required=False,
+        help_text="Telegram user ID for approval"
+    )
+
+
+class ComplianceReviewResponseSerializer(serializers.Serializer):
+    """Output schema for Compliance Review Agent."""
+
+    campaign_name = serializers.CharField()
+    campaign_type = serializers.CharField()
+    channel = serializers.CharField()
+    compliance_results = serializers.JSONField(
+        help_text="Per-persona compliance results"
+    )
+    overall_status = serializers.CharField(
+        help_text="all_pass, some_blocked, all_blocked"
+    )
+    telegram_approval_sent = serializers.BooleanField()
+    telegram_approval_id = serializers.CharField()
+    notes = serializers.CharField()

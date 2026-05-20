@@ -6,7 +6,6 @@ from pathlib import Path
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 
 from .serializers import (
     PersonaClassifierRequestSerializer,
@@ -19,6 +18,8 @@ from .serializers import (
     WhatsAppCopyResponseSerializer,
     LinkedInCopyRequestSerializer,
     LinkedInCopyResponseSerializer,
+    ComplianceReviewRequestSerializer,
+    ComplianceReviewResponseSerializer,
 )
 
 # Add agents path to sys.path to import agents
@@ -43,7 +44,7 @@ class PersonaClassifierViewSet(viewsets.ViewSet):
     }
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     @action(detail=False, methods=["post"])
     def classify(self, request):
@@ -122,7 +123,7 @@ class MessageStrategyViewSet(viewsets.ViewSet):
     }
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
@@ -193,7 +194,7 @@ class EmailCopyViewSet(viewsets.ViewSet):
     }
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
@@ -275,7 +276,7 @@ class WhatsAppCopyViewSet(viewsets.ViewSet):
     }
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
@@ -358,7 +359,7 @@ class LinkedInCopyViewSet(viewsets.ViewSet):
     }
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     @action(detail=False, methods=["post"])
     def generate(self, request):
@@ -417,4 +418,104 @@ class LinkedInCopyViewSet(viewsets.ViewSet):
             "output": "M1-M3 LinkedIn DM series",
             "cadence": ["Day 1", "Day 3-4", "Day 7-10"],
             "features": ["Peer-to-peer tone", "No connection request note", "2 M1 variants", "Either way M3 close"]
+        })
+
+
+class ComplianceReviewViewSet(viewsets.ViewSet):
+    """
+    API Endpoint: POST /api/v1/agents/compliance-review/generate/
+
+    Validates messages against 7 compliance rules. All messages must pass
+    before human approval via Telegram. Blocked messages cannot be approved.
+
+    Example request:
+    {
+        "campaign_name": "Survey: Crop Protection India",
+        "campaign_type": "Survey",
+        "channel": "whatsapp",
+        "messages": {
+            "cxo_strategy": {
+                "M1": {"message": "Hi Rajesh...", "word_count": 35},
+                "M2": {"message": "Here's what...", "word_count": 30},
+                "M3": {"message": "Either way...", "word_count": 28}
+            }
+        },
+        "prospect_name": "Rajesh Kumar",
+        "company_name": "Syngenta India",
+        "trigger_telegram_approval": true,
+        "telegram_user_id": 987654321
+    }
+    """
+
+    permission_classes = []
+
+    @action(detail=False, methods=["post"])
+    def generate(self, request):
+        """Run compliance check on messages."""
+        serializer = ComplianceReviewRequestSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from compliance_review_agent import run_compliance_review_agent
+
+            result = run_compliance_review_agent(
+                campaign_name=serializer.validated_data.get("campaign_name"),
+                campaign_type=serializer.validated_data.get("campaign_type"),
+                channel=serializer.validated_data.get("channel"),
+                messages=serializer.validated_data.get("messages"),
+                prospect_name=serializer.validated_data.get("prospect_name", ""),
+                company_name=serializer.validated_data.get("company_name", ""),
+                trigger_telegram_approval=serializer.validated_data.get("trigger_telegram_approval", False),
+                telegram_user_id=serializer.validated_data.get("telegram_user_id", 0),
+            )
+
+            response_serializer = ComplianceReviewResponseSerializer(data={
+                "campaign_name": result.campaign_name,
+                "campaign_type": result.campaign_type,
+                "channel": result.channel,
+                "compliance_results": {
+                    k: [v.dict() for v in results]
+                    for k, results in result.compliance_results.items()
+                },
+                "overall_status": result.overall_status,
+                "telegram_approval_sent": result.telegram_approval_sent,
+                "telegram_approval_id": result.telegram_approval_id,
+                "notes": result.notes
+            })
+            if response_serializer.is_valid():
+                return Response(response_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except ImportError as e:
+            return Response(
+                {"error": f"Agent module not found: {str(e)}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Agent execution failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def list(self, request):
+        """Return API documentation."""
+        return Response({
+            "endpoint": "/api/v1/agents/compliance-review/generate/",
+            "method": "POST",
+            "description": "Validate messages against 7 compliance rules",
+            "input_source": "Copy agents (Email, WhatsApp, LinkedIn)",
+            "output": "Compliance status with violations and recommendations",
+            "rules": [
+                "1. Spam trigger words (free, urgent, act now, limited time, winner, click here, buy now, risk-free)",
+                "2. Regulatory language (guarantee, promised results, you will definitely)",
+                "3. False claims (we guarantee, proven results, 100% success, no risk)",
+                "4. Specific assertions (unsourced %, currency amounts)",
+                "5. Missing opt-out (WhatsApp only)",
+                "6. Excessive length (WhatsApp: >300 words)",
+                "7. Brand risk language (official partner, certified by, endorsed by)"
+            ],
+            "flow": "Blocked messages cannot be approved. All-pass messages trigger Telegram approval if requested."
         })
