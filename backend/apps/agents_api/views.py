@@ -20,6 +20,8 @@ from .serializers import (
     LinkedInCopyResponseSerializer,
     ComplianceReviewRequestSerializer,
     ComplianceReviewResponseSerializer,
+    ReplyClassifierRequestSerializer,
+    ReplyClassifierResponseSerializer,
 )
 
 # Add agents path to sys.path to import agents
@@ -518,4 +520,94 @@ class ComplianceReviewViewSet(viewsets.ViewSet):
                 "7. Brand risk language (official partner, certified by, endorsed by)"
             ],
             "flow": "Blocked messages cannot be approved. All-pass messages trigger Telegram approval if requested."
+        })
+
+
+class ReplyClassifierViewSet(viewsets.ViewSet):
+    """
+    API Endpoint: POST /api/v1/agents/reply-classifier/classify/
+
+    Classifies inbound replies into 7 intent categories:
+    - positive_interest: Prospect shows interest
+    - meeting_request: Prospect wants to schedule meeting
+    - question: Prospect asking for clarification
+    - negative: Prospect rejects/unsubscribes
+    - out_of_office: Auto-reply/OOO
+    - bounce: Email delivery failure/NDR
+    - ambiguous: Cannot determine intent
+
+    KEY: Stop flag ALWAYS true - automation stops on any reply
+    """
+
+    permission_classes = []
+
+    @action(detail=False, methods=["post"])
+    def classify(self, request):
+        """Classify inbound reply intent."""
+        serializer = ReplyClassifierRequestSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from reply_classifier_agent import run_reply_classifier_agent
+
+            result = run_reply_classifier_agent(
+                reply_text=serializer.validated_data.get("reply_text"),
+                channel=serializer.validated_data.get("channel"),
+                prospect_id=serializer.validated_data.get("prospect_id"),
+                campaign_id=serializer.validated_data.get("campaign_id"),
+                prospect_email=serializer.validated_data.get("prospect_email"),
+                prospect_name=serializer.validated_data.get("prospect_name"),
+                prior_touchpoints=serializer.validated_data.get("prior_touchpoints"),
+                reply_timestamp=serializer.validated_data.get("reply_timestamp"),
+            )
+
+            response_serializer = ReplyClassifierResponseSerializer(data={
+                "prospect_id": result.prospect_id,
+                "campaign_id": result.campaign_id,
+                "intent_category": result.intent_category,
+                "confidence_score": result.confidence_score,
+                "recommended_action": result.recommended_action,
+                "stop_flag": result.stop_flag,
+                "requires_human_review": result.requires_human_review,
+                "signals_detected": result.signals_detected,
+                "notes": result.notes,
+            })
+
+            if response_serializer.is_valid():
+                return Response(response_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(response_serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except ImportError as e:
+            return Response(
+                {"error": f"Agent module not found: {str(e)}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Agent execution failed: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def list(self, request):
+        """Return API documentation."""
+        return Response({
+            "endpoint": "/api/v1/agents/reply-classifier/classify/",
+            "method": "POST",
+            "description": "Classify inbound reply into 7 intent categories",
+            "intent_categories": [
+                "positive_interest - Prospect shows interest",
+                "meeting_request - Prospect wants to schedule",
+                "question - Prospect asks for clarification",
+                "negative - Prospect rejects/unsubscribes",
+                "out_of_office - Auto-reply/OOO",
+                "bounce - Email delivery failure",
+                "ambiguous - Cannot determine intent",
+            ],
+            "confidence": "0-100 based on signal strength",
+            "stop_flag": "Always true - automation stops on any reply",
+            "human_review": "Triggered when confidence < 60",
+            "edge_cases_handled": "139+ edge cases including typos, emoji, multilingual, forwarding, conflicts, etc.",
         })

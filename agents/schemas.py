@@ -548,3 +548,74 @@ class OrchestrationOutput(BaseModel):
         ..., description="Summary of what was generated, what was skipped, why"
     )
     notes: str = ""
+
+
+# ============================================================================
+# REPLY CLASSIFIER AGENT SCHEMAS
+# ============================================================================
+
+class ReplyClassificationSignal(BaseModel):
+    """Signal detected in reply text."""
+
+    signal_type: str = Field(..., description="Type of signal (intent keyword, pattern, etc.)")
+    matched_text: str = Field(..., description="Exact text that matched signal")
+    confidence_boost: int = Field(default=0, description="Confidence adjustment (-100 to +100)")
+
+
+class ReplyClassificationResult(BaseModel):
+    """Classification result for a single reply."""
+
+    reply_id: str = Field(..., description="Unique reply identifier")
+    intent_category: Literal[
+        "positive_interest",
+        "meeting_request",
+        "question",
+        "negative",
+        "out_of_office",
+        "bounce",
+        "ambiguous"
+    ] = Field(..., description="Classified intent")
+    confidence_score: int = Field(..., ge=0, le=100, description="Confidence 0-100")
+    signals_detected: List[ReplyClassificationSignal] = Field(
+        default_factory=list, description="Signals that contributed to classification"
+    )
+    recommended_action: str = Field(..., description="Recommended action based on intent")
+    requires_human_review: bool = Field(
+        default=False, description="True if confidence < 60 or ambiguous"
+    )
+    stop_flag: bool = Field(default=True, description="Always true - automation should stop")
+
+
+class ReplyClassifierInput(BaseModel):
+    """Input to Reply Classifier Agent."""
+
+    reply_text: str = Field(..., description="The reply text to classify")
+    channel: Literal["email", "whatsapp", "linkedin"] = Field(
+        ..., description="Channel where reply came from"
+    )
+    prospect_id: str = Field(..., description="Prospect ID (UUID)")
+    campaign_id: str = Field(..., description="Campaign ID (UUID)")
+    prospect_email: Optional[str] = Field(default=None, description="Prospect email address")
+    prospect_name: Optional[str] = Field(default=None, description="Prospect name")
+    prior_touchpoints: Optional[List[Dict]] = Field(
+        default=None, description="Prior messages in conversation"
+    )
+    reply_timestamp: Optional[str] = Field(default=None, description="When reply was received")
+
+
+class ReplyClassifierOutput(BaseModel):
+    """Output from Reply Classifier Agent."""
+
+    prospect_id: str = Field(..., description="Prospect ID")
+    campaign_id: str = Field(..., description="Campaign ID")
+    intent_category: str = Field(..., description="Primary intent classification")
+    confidence_score: int = Field(..., description="Confidence 0-100")
+    recommended_action: str = Field(..., description="Recommended next action")
+    stop_flag: bool = Field(default=True, description="Always true")
+    requires_human_review: bool = Field(
+        default=False, description="Flag for human review if low confidence"
+    )
+    signals_detected: List[str] = Field(
+        default_factory=list, description="Signals/keywords found"
+    )
+    notes: str = Field(default="", description="Additional notes")

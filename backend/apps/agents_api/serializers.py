@@ -459,3 +459,74 @@ class ComplianceReviewResponseSerializer(serializers.Serializer):
     telegram_approval_sent = serializers.BooleanField()
     telegram_approval_id = serializers.CharField()
     notes = serializers.CharField()
+
+
+# ============ Reply Classifier Agent ============
+
+class ReplyClassifierRequestSerializer(serializers.Serializer):
+    """Input schema for Reply Classifier Agent."""
+
+    reply_text = serializers.CharField(
+        help_text="The inbound reply text to classify"
+    )
+    channel = serializers.ChoiceField(
+        choices=["email", "whatsapp", "linkedin"],
+        help_text="Channel where reply came from"
+    )
+    prospect_id = serializers.CharField(
+        help_text="Prospect ID (UUID)"
+    )
+    campaign_id = serializers.CharField(
+        help_text="Campaign ID (UUID)"
+    )
+    prospect_email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+        help_text="Prospect email address"
+    )
+    prospect_name = serializers.CharField(
+        max_length=200,
+        required=False,
+        allow_blank=True,
+        help_text="Prospect name"
+    )
+    prior_touchpoints = serializers.JSONField(
+        required=False,
+        help_text="Prior messages in conversation"
+    )
+    reply_timestamp = serializers.DateTimeField(
+        required=False,
+        help_text="When reply was received"
+    )
+
+
+class ReplyClassifierResponseSerializer(serializers.Serializer):
+    """Output schema for Reply Classifier Agent."""
+
+    prospect_id = serializers.CharField()
+    campaign_id = serializers.CharField()
+    intent_category = serializers.CharField(
+        help_text="positive_interest, meeting_request, question, negative, out_of_office, bounce, ambiguous"
+    )
+    confidence_score = serializers.IntegerField(
+        min_value=0,
+        max_value=100,
+        help_text="Confidence 0-100"
+    )
+    recommended_action = serializers.CharField(
+        help_text="Recommended next action"
+    )
+    stop_flag = serializers.BooleanField(
+        help_text="Always true - automation stops on any reply"
+    )
+    requires_human_review = serializers.BooleanField(
+        help_text="True if confidence < 60"
+    )
+    signals_detected = serializers.ListField(
+        child=serializers.CharField(),
+        help_text="Signals/keywords found in reply"
+    )
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True
+    )
